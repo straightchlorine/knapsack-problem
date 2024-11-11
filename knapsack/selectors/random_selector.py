@@ -1,12 +1,13 @@
 import numpy as np
-from knapsack.base.population import Population
 from knapsack.selectors.selector import Selector
 
 
 class RandomSelector(Selector):
-    def __init__(self, population: Population):
+    def __init__(self):
         """Basic random selector."""
-        super().__init__(population)
+        super().__init__()
 
     def select(self):
-        return np.random.choice(self.population.chromosomes, 2)
+        return self.population[
+            np.random.choice(self.population.shape[0], 2, replace=False)
+        ]

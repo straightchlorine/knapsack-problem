@@ -15,15 +15,10 @@ class Chromosome:
     def __repr__(self):
         return f"Chromosome(genes={self.genes})"
 
-    def __getitem__(self, index):
-        """Allow access to genes using array-like indexing."""
-        return self.genes[index]
-
     def __array__(self):
-        """Return the chromosome as a NumPy array."""
-        return self.genes
+        """Return the chromosome's genes.
 
-    @property
-    def length(self):
-        """The length property."""
-        return self.genes.size
+        Returns:
+            np.ndarray: Genes of the chromosome.
+        """
+        return self.genes

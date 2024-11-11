@@ -19,10 +19,9 @@ problem = dataset.random_problem()
 alg = GeneticAlgorithm(
     problem,
     FitnessEvaluator(problem),
-    RandomSelector(problem),
-    # can be less
-    population_size=100,
-    num_generations=500,
+    RandomSelector(),
+    population_size=10,
+    num_generations=100,
     mutation_rate=0.01,
 )
 
@@ -30,4 +29,4 @@ alg = GeneticAlgorithm(
 alg.evolve()
 
 # get the best solutions
-alg.get_best_solution(5)
+alg.get_best_solution()

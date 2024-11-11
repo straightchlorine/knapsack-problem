@@ -13,8 +13,10 @@ class FitnessEvaluator(Evaluator):
         self.dataset = dataset
 
     def evaluate(self, chromosome):
-        total_weight = np.sum(chromosome.genes * self.dataset.weights)
-        total_value = np.sum(chromosome.genes * self.dataset.values)
+        # total_weight = np.sum(chromosome.genes * self.dataset.weights)
+        # total_value = np.sum(chromosome.genes * self.dataset.values)
+        total_weight = np.sum(chromosome * self.dataset.weights)
+        total_value = np.sum(chromosome * self.dataset.values)
 
         if total_weight > self.dataset.capacity:
             total_value = 0
