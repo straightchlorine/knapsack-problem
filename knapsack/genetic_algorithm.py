@@ -1,8 +1,20 @@
 import numpy as np
 
-from knapsack.population import Population
 from knapsack.evaluators.evaluator import Evaluator
+from knapsack.operators.crossover import Crossover
+from knapsack.population import Population
 from knapsack.selectors.selector import Selector
+import time
+
+
+class Timer:
+    def __enter__(self):
+        self.start = time.perf_counter()
+        return self
+
+    def __exit__(self, *args):
+        self.end = time.perf_counter()
+        self.interval = (self.end - self.start) * 1000
 
 
 class GeneticAlgorithm:
@@ -11,6 +23,7 @@ class GeneticAlgorithm:
         dataset,
         evaluator: Evaluator,
         selector: Selector,
+        operator: Crossover,
         population_size=100,
         num_generations=500,
         mutation_rate=0.01,
@@ -25,25 +38,13 @@ class GeneticAlgorithm:
         # set the evaluator and selector objects
         self.evaluator = evaluator
         self.selector = selector
+        self.operator = operator
 
         # create and initialize the first population
         self.population = Population(
             self.selector, self.population_size, self.gene_length
         )
         self.population.initialize()
-
-    def crossover(self, parent1, parent2):
-        # choose random point for crossover
-        point = np.random.randint(1, parent1.size - 1)
-
-        # generate genes for two children
-        genes = (
-            np.concatenate([parent1[:point], parent2[point:]]),
-            np.concatenate([parent1[point:], parent2[:point]]),
-        )
-
-        # return two chromosomes
-        return np.array([genes[0], genes[1]])
 
     def mutate(self, genes):
         # iterate through the genes
@@ -65,7 +66,7 @@ class GeneticAlgorithm:
             parent1, parent2 = parents
 
             # create a child by crossover and mutation
-            children = self.crossover(parent1, parent2)
+            children = self.operator.crossover(parent1, parent2)
 
             # mutate the children
             for child in children:
@@ -78,9 +79,13 @@ class GeneticAlgorithm:
 
     def evolve(self):
         """Evolve the population for a set number of generations."""
-        for _ in range(self.num_generations):
-            self.population = self.new_generation()
-            self.population.update_selector()
+        with Timer() as timer:
+            for _ in range(self.num_generations):
+                self.population = self.new_generation()
+                self.population.update_selector()
+
+        print("=" * 35)
+        print(f"Evolution took {timer.interval:.4f} miliseconds.")
 
     def prompt(self, evaluated):
         """Prompt the evaluated chromosome.

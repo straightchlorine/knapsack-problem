@@ -3,7 +3,7 @@ class Evaluator:
 
     def __init__(self, dataset):
         print(f"Evaluating chromosomes via {self.__class__.__name__}")
-        print(f"Dataset: {dataset}")
+        print(f"{dataset}")
         self.dataset = dataset
 
     def evaluate(self, chromosome):

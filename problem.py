@@ -4,6 +4,9 @@ from knapsack.evaluators.fitness import (
     ScalingFitnessEvaluator,
 )
 from knapsack.genetic_algorithm import GeneticAlgorithm
+from knapsack.operators.fixed_point_crossover import FixedPointCrossover
+from knapsack.operators.multi_point_crossover import MultiPointCrossover
+from knapsack.operators.uniform_crossover import UniformCrossover
 from knapsack.selectors.elitism_selector import ElitismSelector
 from knapsack.selectors.random_selector import RandomSelector
 
@@ -48,11 +51,23 @@ selector = ElitismSelector(evaluator)
 # to the random. For this case with only 5 weight:value pairs it works well,
 # but for wider cases it might constrict the algorithm too much. )
 
+# display debug information
+dev = False
+
+# operator = FixedPointCrossover(dev)
+
+# amount of points defines how many points will be picked for crossover
+# operator = MultiPointCrossover(points=2, dev)
+
+operator = UniformCrossover(dev)
+
+
 # create genetic algorithm object
 alg = GeneticAlgorithm(
     problem,
     evaluator,
     selector,
+    operator,
     population_size=10,
     num_generations=10,
     mutation_rate=0.01,
