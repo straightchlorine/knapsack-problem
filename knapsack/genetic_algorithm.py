@@ -1,10 +1,11 @@
+import time
+
 import numpy as np
 
 from knapsack.evaluators.evaluator import Evaluator
 from knapsack.operators.crossover import Crossover
 from knapsack.population import Population
 from knapsack.selectors.selector import Selector
-import time
 
 
 class Timer:

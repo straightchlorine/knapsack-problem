@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from knapsack.dataset import DataInterface
 from knapsack.evaluators.fitness import (
     FitnessEvaluator,

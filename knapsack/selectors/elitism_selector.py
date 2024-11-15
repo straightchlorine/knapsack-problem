@@ -1,4 +1,3 @@
-from knapsack.population import Population
 from knapsack.evaluators.evaluator import Evaluator
 from knapsack.selectors.selector import Selector
 

@@ -1,4 +1,5 @@
 import numpy as np
+
 from knapsack.operators.crossover import Crossover
 
 """Simples class providing crossover operation for chromosomes.
