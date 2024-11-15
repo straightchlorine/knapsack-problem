@@ -1,6 +1,6 @@
 import numpy as np
 
-from knapsack.chromosome import Chromosome
+# from knapsack.chromosome import Chromosome
 # from knapsack.selectors.selector import Selector
 
 

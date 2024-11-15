@@ -45,13 +45,13 @@ class GeneticAlgorithm:
         # return two chromosomes
         return np.array([genes[0], genes[1]])
 
-    def mutate(self, chromosome):
+    def mutate(self, genes):
         # iterate through the genes
-        for i in chromosome:
+        for i in genes:
             # if randomly selected probability is less than set, flip the genes
             if np.random.rand() < self.mutation_rate:
-                chromosome[i] = 1 - chromosome[i]
-        return chromosome
+                genes[i] = 1 - genes[i]
+        return genes
 
     def new_generation(self):
         # new generation
@@ -74,20 +74,21 @@ class GeneticAlgorithm:
             # add the child to the new population
             new_population.add_chromosome(children)
 
-        new_population.update_selector()
-
         return new_population
 
     def evolve(self):
         """Evolve the population for a set number of generations."""
         for _ in range(self.num_generations):
             self.population = self.new_generation()
+            self.population.update_selector()
 
     def prompt(self, evaluated):
         # total_weight = np.sum(evaluated.genes * self.dataset.weights)
         # total_value = np.sum(evaluated.genes * self.dataset.values)
         total_weight = np.sum(evaluated * self.dataset.weights)
         total_value = np.sum(evaluated * self.dataset.values)
+
+        evaluation = self.evaluator.evaluate(evaluated)
         capacity = float(self.dataset.capacity)
 
         total_prompt = "\n".join(
@@ -96,19 +97,18 @@ class GeneticAlgorithm:
                 str(evaluated),
                 "=" * 30,
                 f"total weight: {total_weight} | capacity: {capacity}",
-                f"total value: {total_value}",
+                f"total value: {total_value} | evaluation: {evaluation}",
             ]
         )
         print(total_prompt)
 
-    def get_best_solution(self, n=1):
+    def get_best_solution(self, n=10):
         ordered = sorted(
             self.population.chromosomes,
             key=lambda chrom: self.evaluator.evaluate(chrom),
             reverse=True,
-        )[:n]
-
-        print(f"\n{self.dataset}")
+            # )[:n]
+        )
 
         for evaluated in ordered:
             self.prompt(evaluated)

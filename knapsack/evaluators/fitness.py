@@ -10,7 +10,6 @@ class FitnessEvaluator(Evaluator):
         Evaluates chromosome to 0, if weight exceeds capacity.
         """
         super().__init__(dataset)
-        self.dataset = dataset
 
     def evaluate(self, chromosome):
         # total_weight = np.sum(chromosome.genes * self.dataset.weights)
@@ -31,7 +30,6 @@ class ScalingFitnessEvaluator(Evaluator):
         Punishment scales with the amount of weight exceeding the capacity.
         """
         super().__init__(dataset)
-        self.dataset = dataset
 
     def evaluate(self, chromosome):
         total_weight = np.sum(chromosome.genes * self.dataset.weights)

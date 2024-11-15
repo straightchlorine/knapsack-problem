@@ -1,9 +1,10 @@
 class Evaluator:
     """Base class for chromosome evaluators."""
 
-    def __init__(self, problem):
+    def __init__(self, dataset):
         print(f"Evaluating chromosomes via {self.__class__.__name__}")
-        self.problem = problem
+        print(f"Dataset: {dataset}")
+        self.dataset = dataset
 
     def evaluate(self, chromosome):
         """Evaluate the chromosome."""

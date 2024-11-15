@@ -5,7 +5,7 @@ import numpy as np
 if TYPE_CHECKING:
     from knapsack.population import Population
 
-from knapsack.population import Chromosome
+# from knapsack.population import Chromosome
 
 
 class Selector:
