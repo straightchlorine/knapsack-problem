@@ -1,17 +1,16 @@
 import numpy as np
 
-# from knapsack.chromosome import Chromosome
-# from knapsack.selectors.selector import Selector
+from knapsack.selectors.selector import Selector
 
 
 class Population:
-    def __init__(self, selector, population_size=100, gene_length=5):
+    def __init__(self, selector: Selector, population_size=100, gene_length=5):
         """Population object, representing a group of chromosomes.
 
         Args:
             selector (Selector): Selector object, used to select the parents.
             population_size (int): Size of the population.
-            gene_length (int): Length of the
+            gene_length (int): Length of the gene.
         """
         self.population_size = population_size
         self.gene_length = gene_length
@@ -27,10 +26,10 @@ class Population:
         self.selector.population = self.chromosomes
 
     def __gen_genes(self):
-        """Generate a chromosome object with random genes.
+        """Generate a chromosome with random genes.
 
         Returns:
-            Chromosome: Chromosome object with random genes.
+            np.ndarray: Chromosome with random genes.
         """
         genes = np.random.choice([0, 1], size=self.gene_length)
         return genes
@@ -48,7 +47,7 @@ class Population:
         """Select parents for the next generation.
 
         Returns:
-            list[Chromosome]: List of chromosomes selected as parents.
+            np.ndarray: Array of selected parents.
         """
         return self.selector.select()
 
@@ -56,13 +55,12 @@ class Population:
         """Add a chromosome or a list of them to the population.
 
         Args:
-            chromosome (Chromosome | list[Chromosome]): Chromosome object or
-                list of them.
+            chromosome (np.ndarray): Chromosome to add.
 
         Returns:
             int: Index of the added chromosome.
         """
-        # Initialize `self.chromosomes` as an empty array if it hasn't been already
+        # Initialize `self.chromosomes` as an empty array if it hasn't been yet
         if not hasattr(self, "chromosomes") or self.chromosomes.size == 0:
             self.chromosomes = np.empty(
                 (0, chromosome.shape[1]), dtype=chromosome.dtype

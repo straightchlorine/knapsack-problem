@@ -6,7 +6,7 @@ import pandas as pd
 
 class DataInterface:
     def __init__(self, weights, values, capacities):
-        """Main class for the knapsack problem.
+        """Main class for the dataset management.
 
         Fields:
             weights (np.ndarray): Array of weights.
@@ -22,11 +22,15 @@ class DataInterface:
         self._chromosome_datasets = []
 
         for w, v, c in zip(weights, values, capacities):
-            self._chromosome_datasets.append(ChromosomeDataset(w, v, c))
+            self._chromosome_datasets.append(Dataset(w, v, c))
+
+    def random_problem(self):
+        """Return random chromosome from the dataset."""
+        return np.random.choice(self._chromosome_datasets, size=1)[0]
 
     @classmethod
     def from_csv(cls, filepath):
-        """Load dataset from CSV file and return a DatasetInterface object.
+        """Load datasets from CSV file and return a DatasetInterface object.
 
         Note: The CSV file is assumend to have three columns - weight, values
         and capacity, such as:
@@ -39,8 +43,7 @@ class DataInterface:
             filepath (str): Path to the CSV file.
 
         Returns:
-            DatasetInterface: dataset object with initialized weights, values
-                and capacities
+            DatasetInterface: Object storing all the datasets.
         """
         df = pd.read_csv(filepath, delimiter=";")
 
@@ -73,10 +76,6 @@ class DataInterface:
 
         return cls(weights, values, capacities)
 
-    def random_problem(self):
-        """Return random chromosome from the dataset."""
-        return np.random.choice(self._chromosome_datasets, size=1)[0]
-
     @property
     def weights(self):
         """The weights property."""
@@ -98,9 +97,9 @@ class DataInterface:
         return self._chromosome_datasets
 
 
-class ChromosomeDataset:
+class Dataset:
     def __init__(self, weights, values, capacity):
-        """Class representing the dataset of the chromosome.
+        """Class representing the problem dataset.
 
         Args:
             weights (np.ndarray): weights.
@@ -115,7 +114,7 @@ class ChromosomeDataset:
         weights = f"weights={self.weights}"
         values = f"values={self.values}"
         capacity = f"capacity={self.capacity}"
-        return f"ChromosomeDataset({weights}, {values}, {capacity})"
+        return f"Dataset({weights}, {values}, {capacity})"
 
     @property
     def weights(self):

@@ -1,6 +1,5 @@
 import numpy as np
 
-from knapsack.chromosome import Chromosome
 from knapsack.population import Population
 from knapsack.evaluators.evaluator import Evaluator
 from knapsack.selectors.selector import Selector
@@ -23,10 +22,11 @@ class GeneticAlgorithm:
         self.num_generations = num_generations
         self.mutation_rate = mutation_rate
 
+        # set the evaluator and selector objects
         self.evaluator = evaluator
         self.selector = selector
 
-        # create and initialize the population
+        # create and initialize the first population
         self.population = Population(
             self.selector, self.population_size, self.gene_length
         )
@@ -83,18 +83,21 @@ class GeneticAlgorithm:
             self.population.update_selector()
 
     def prompt(self, evaluated):
-        # total_weight = np.sum(evaluated.genes * self.dataset.weights)
-        # total_value = np.sum(evaluated.genes * self.dataset.values)
+        """Prompt the evaluated chromosome.
+
+        Args:
+            evaluated (np.ndarray): Evaluated chromosome.
+        """
         total_weight = np.sum(evaluated * self.dataset.weights)
         total_value = np.sum(evaluated * self.dataset.values)
-
         evaluation = self.evaluator.evaluate(evaluated)
+
         capacity = float(self.dataset.capacity)
 
         total_prompt = "\n".join(
             [
                 "=" * 30,
-                str(evaluated),
+                f"genes={evaluated}",
                 "=" * 30,
                 f"total weight: {total_weight} | capacity: {capacity}",
                 f"total value: {total_value} | evaluation: {evaluation}",
@@ -102,13 +105,20 @@ class GeneticAlgorithm:
         )
         print(total_prompt)
 
-    def get_best_solution(self, n=10):
+    def get_best_solution(self, n=1):
+        """Get the best solutions from the population.
+
+        Args:
+            n (int): Display top n solutions from the population.
+
+        Returns:
+            np.ndarray: Best solution from the population.
+        """
         ordered = sorted(
             self.population.chromosomes,
             key=lambda chrom: self.evaluator.evaluate(chrom),
             reverse=True,
-            # )[:n]
-        )
+        )[:n]
 
         for evaluated in ordered:
             self.prompt(evaluated)
