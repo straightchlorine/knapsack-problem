@@ -1,5 +1,5 @@
 import numpy as np
-
+import logging
 from knapsack.evaluators.evaluator import Evaluator
 
 """
@@ -211,49 +211,130 @@ Test cases:
         =========== Managed to get the best solution. ===========
 """
 
+# logger
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
 
 class FitnessEvaluator(Evaluator):
     def __init__(self, dataset):
         """Basic fitness evaluator.
 
         Evaluates to 0, if weight exceeds capacity.
+
+        Args:
+            dataset: An object containing weights, values, and capacity.
         """
         super().__init__(dataset)
 
     def evaluate(self, chromosome):
+        """Evaluate the fitness of a chromosome.
+
+        Args:
+            chromosome: A binary array representing the chromosome.
+
+        Returns:
+            float: The fitness value of the chromosome, or 0 if weight exceeds capacity.
+        """
         total_weight = np.sum(chromosome * self.dataset.weights)
         total_value = np.sum(chromosome * self.dataset.values)
 
-        # value to 0, if weight exceeds capacity
         if total_weight > self.dataset.capacity:
-            total_value = 0
+            logging.info(
+                f"Weight exceeds capacity. Total weight: {total_weight:.4f}, Capacity: {self.dataset.capacity:.4f}. Fitness set to 0."
+            )
+            return 0
 
+        logging.info(
+            f"Chromosome evaluated successfully. Total value: {total_value:.4f}"
+        )
         return total_value
 
 
 class ScalingFitnessEvaluator(Evaluator):
-    def __init__(self, dataset):
+    def __init__(
+        self, dataset, normalize=False, std_threshold=3, scaling_factor=None
+    ):
         """Scaling fitness evaluator.
 
         Punishment scales with the amount of weight exceeding the capacity.
+
+        Args:
+            dataset: An object containing weights, values, and capacity.
+            normalize (bool): Whether to normalize weights and values (default: False).
+            std_threshold (float): Threshold for standard deviation to mean ratio to apply normalization.
+            scaling_factor (float): Scaling factor for penalty calculation. If None, it is computed dynamically.
         """
         super().__init__(dataset)
 
-    def evaluate(self, chromosome):
-        # if weights would be several magnitudes different than the values,
-        # it could consider normalization, like:
-        # norm_weights = self.dataset.weights / np.sum(self.dataset.weights)
-        # norm_values = self.dataset.values / np.sum(self.dataset.values)
+        # standard deviation of weights and values
+        weight_std_ratio = np.std(self.dataset.weights) / np.mean(
+            self.dataset.weights
+        )
+        value_std_ratio = np.std(self.dataset.values) / np.mean(
+            self.dataset.values
+        )
 
-        total_weight = np.sum(chromosome * self.dataset.weights)
-        total_value = np.sum(chromosome * self.dataset.values)
+        # check whether normalization is required
+        self.normalize = (
+            normalize
+            or weight_std_ratio > std_threshold
+            or value_std_ratio > std_threshold
+        )
 
-        # punishment scales with the amount of weight exceeding the capacity
-        # and amount of elements within the array
-        if total_weight > self.dataset.capacity:
-            penalty = (total_weight - self.dataset.capacity) * len(
+        # apply the normalization
+        if self.normalize:
+            self.norm_weights = self.dataset.weights / np.sum(
                 self.dataset.weights
+            )
+            self.norm_values = self.dataset.values / np.sum(
+                self.dataset.values
+            )
+            logging.info("Normalization applied to weights and values.")
+        else:
+            self.norm_weights = self.dataset.weights
+            self.norm_values = self.dataset.values
+            logging.info("Normalization not applied.")
+
+        # if factor is not provided, compute it dynamically
+        if scaling_factor is None:
+            self.scaling_factor = np.mean(self.dataset.values) / np.mean(
+                self.dataset.weights
+            )
+            logging.info(
+                f"Dynamic scaling factor computed: {self.scaling_factor:.4f}"
+            )
+        else:
+            self.scaling_factor = scaling_factor
+            logging.info(
+                f"Provided scaling factor used: {self.scaling_factor:.4f}"
+            )
+
+    def evaluate(self, chromosome):
+        """Evaluate the fitness of a chromosome.
+
+        Args:
+            chromosome: A binary array representing the chromosome.
+
+        Returns:
+            float: The fitness value of the chromosome.
+        """
+        total_weight = np.sum(chromosome * self.norm_weights)
+        total_value = np.sum(chromosome * self.norm_values)
+
+        if total_weight > self.dataset.capacity:
+            excess_weight = total_weight - self.dataset.capacity
+            penalty = (
+                excess_weight * len(self.dataset.weights) * self.scaling_factor
+            )
+
+            logging.info(
+                f"Excess weight: {excess_weight:.4f}, Penalty applied: {penalty:.4f}"
             )
             return total_value - penalty
 
+        logging.info(
+            f"Chromosome evaluated successfully. Total value: {total_value:.4f}"
+        )
         return total_value

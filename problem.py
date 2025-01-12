@@ -54,24 +54,18 @@ selector = ElitismSelector(evaluator)
 # but for wider cases it might constrict the algorithm too much. )
 
 # display debug information
-dev = False
-
-# operator = FixedPointCrossover(dev)
-
-# amount of points defines how many points will be picked for crossover
-# operator = MultiPointCrossover(points=2, dev)
-
-operator = UniformCrossover(dev)
-
+dev = True
 
 # create genetic algorithm object
 alg = GeneticAlgorithm(
     problem,
     evaluator,
     selector,
-    operator,
+    # FixedPointCrossover(dev, fixed_point=3),
+    # MultiPointCrossover(points=[2, 3], dev=dev),
+    UniformCrossover(dev),
     population_size=10,
-    num_generations=10,
+    num_generations=5,
     mutation_rate=0.01,
 )
 

@@ -1,4 +1,5 @@
 import numpy as np
+import logging
 
 from knapsack.operators.crossover import Crossover
 
@@ -30,27 +31,54 @@ Test cases:
 """
 
 
+# logger
+logging.basicConfig(
+    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+
 class FixedPointCrossover(Crossover):
-    def __init__(self, dev=False):
+    def __init__(self, dev=False, fixed_point=None):
+        """Initialize the FixedPointCrossover operator.
+
+        Args:
+            dev (bool, optional): Whether to display debug information.
+                Defaults to False.
+            fixed_point (int, optional): Fixed crossover point. If None, a
+            random point between 1 and parent_a.size - 1 will be chosen.
+        """
         super().__init__(dev)
+        self.fixed_point = fixed_point
 
     def crossover(self, parent_a, parent_b):
-        # choose random point for crossover
-        point = np.random.randint(1, parent_a.size - 1)
+        # validate the fixed point parameter
+        if self.fixed_point is not None:
+            if not (1 <= self.fixed_point < parent_a.size):
+                raise ValueError(
+                    "fixed_point must be between 1 and parent_a.size - 1"
+                )
+            point = self.fixed_point
+        else:
+            point = np.random.randint(1, parent_a.size - 1)
 
-        # generate genes for two children
+        # create two children
         genes = (
             np.concatenate([parent_a[:point], parent_b[point:]]),
             np.concatenate([parent_a[point:], parent_b[:point]]),
         )
 
-        # debug for presentation
+        # Debug for presentation
         if self.dev:
-            print(f"Crossover on {parent_a} and {parent_b}")
-            print(f"Picked random point for crossover: {point}")
-            print(f"Generated children: {genes[0]} and {genes[1]}")
-            print(f"Child 0 parts: {parent_a[:point]} and {parent_b[point:]}")
-            print(f"Child 1 parts: {parent_a[point:]} and {parent_b[:point]}")
-            print("=" * 20)
+            logging.debug(
+                f"FixedPointCrossover:\nUsing crossover point {point}"
+            )
+            logging.debug(f"Crossover on {parent_a} and {parent_b}")
+            logging.debug(f"Generated children: {genes[0]} and {genes[1]}")
+            logging.debug(
+                f"Child 0 parts: {parent_a[:point]} and {parent_b[point:]}"
+            )
+            logging.debug(
+                f"Child 1 parts: {parent_a[point:]} and {parent_b[:point]}"
+            )
 
         return np.array([genes[0], genes[1]])
