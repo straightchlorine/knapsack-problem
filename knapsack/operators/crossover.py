@@ -3,12 +3,9 @@ class Crossover:
 
     def __init__(self, dev=False):
         self.dev = dev
-        print(f"Crossover performed by {self.__class__.__name__}", end=" ")
 
-        if self.dev:
-            print("with dev mode enabled\n")
-        else:
-            print("\n")
+    def __str__(self):
+        return f"Crossover operator: {self.__class__.__name__}\n{35*'='}"
 
     def crossover(self, parent_a, parent_b):
         """Perform crossover in order to generate offspring.

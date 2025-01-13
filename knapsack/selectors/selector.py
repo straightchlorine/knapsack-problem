@@ -7,7 +7,10 @@ class Selector:
     _population: np.ndarray
 
     def __init__(self):
-        print(f"Selecting parents parents via {self.__class__.__name__}")
+        pass
+
+    def __str__(self):
+        return f"Selector: {self.__class__.__name__}"
 
     def select(self):
         """Select parents for the next generation.

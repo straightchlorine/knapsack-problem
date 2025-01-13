@@ -38,8 +38,13 @@ class GeneticAlgorithm:
 
         # set the evaluator and selector objects
         self.evaluator = evaluator
+        print(evaluator)
+
         self.selector = selector
+        print(selector)
+
         self.operator = operator
+        print(operator)
 
         # create and initialize the first population
         self.population = Population(
@@ -110,6 +115,20 @@ class GeneticAlgorithm:
             ]
         )
         print(total_prompt)
+
+    def get_solution_fitness(self, solution):
+        """Get the fitness of the solution.
+        Args:
+            solution (np.ndarray): Solution to evaluate.
+        Returns:
+            float: Fitness of the solution.
+        """
+        return self.evaluator.evaluate(solution)
+
+    def measure_diversity(self):
+        """Calculate genetic diversity in the population."""
+        unique = {tuple(c) for c in self.population.chromosomes}
+        return len(unique) / len(self.population.chromosomes) * 100
 
     def get_best_solution(self, n=1):
         """Get the best solutions from the population.

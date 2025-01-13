@@ -2,9 +2,11 @@ class Evaluator:
     """Base class for chromosome evaluators."""
 
     def __init__(self, dataset):
-        print(f"Evaluating chromosomes via {self.__class__.__name__}")
-        print(f"{dataset}")
         self.dataset = dataset
+
+    def __str__(self):
+        print(35 * "=")
+        return f"{self.dataset}\nEvaluator: {self.__class__.__name__}"
 
     def evaluate(self, chromosome):
         """Evaluate the chromosome."""

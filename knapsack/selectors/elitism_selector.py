@@ -14,6 +14,11 @@ class ElitismSelector(Selector):
         self.evaluator = evaluator
 
     def select(self):
+        """Select parents using elitism selection.
+
+        Returns:
+            list: List of two best chromosomes.
+        """
         sorted_population = sorted(
             self.population,
             key=lambda c: self.evaluator.evaluate(c),

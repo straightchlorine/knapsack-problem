@@ -56,6 +56,7 @@ class MultiPointCrossover(Crossover):
             np.ndarray: Sorted array of valid crossover points.
         """
         if self._last_crossover_points is not None:
+            logging.info("Using cached crossover points")
             return self._last_crossover_points
 
         if self.points is not None:
@@ -76,10 +77,7 @@ class MultiPointCrossover(Crossover):
     def crossover(self, parent_a, parent_b):
         # validate points
         points = self._validate_points(parent_a)
-        if self.dev:
-            logging.debug(
-                f"MultiPointCrossover: Using crossover points {points}"
-            )
+        logging.info(f"MultiPointCrossover: Using crossover points {points}")
 
         # start with both children having parents' genes
         genes = [parent_a.copy(), parent_b.copy()]
@@ -97,7 +95,7 @@ class MultiPointCrossover(Crossover):
         self._last_crossover_points = points
 
         if self.dev:
-            logging.debug(f"Crossover on {parent_a} and {parent_b}")
-            logging.debug(f"Generated children: {genes[0]} and {genes[1]}")
+            logging.info(f"Crossover on {parent_a} and {parent_b}")
+            logging.info(f"Generated children: {genes[0]} and {genes[1]}")
 
         return np.array(genes)

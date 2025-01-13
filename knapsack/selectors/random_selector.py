@@ -9,6 +9,7 @@ class RandomSelector(Selector):
         super().__init__()
 
     def select(self):
+        """Selects two random chromosomes from the population."""
         return self.population[
             np.random.choice(self.population.shape[0], 2, replace=False)
         ]

@@ -60,7 +60,7 @@ class Population:
         Returns:
             int: Index of the added chromosome.
         """
-        # Initialize `self.chromosomes` as an empty array if it hasn't been yet
+        # initialize `self.chromosomes` as an empty array if it hasn't been yet
         if not hasattr(self, "chromosomes") or self.chromosomes.size == 0:
             self.chromosomes = np.empty(
                 (0, chromosome.shape[1]), dtype=chromosome.dtype

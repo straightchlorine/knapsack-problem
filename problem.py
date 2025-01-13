@@ -11,18 +11,36 @@ from knapsack.operators.multi_point_crossover import MultiPointCrossover
 from knapsack.operators.uniform_crossover import UniformCrossover
 from knapsack.selectors.elitism_selector import ElitismSelector
 from knapsack.selectors.random_selector import RandomSelector
+from knapsack.selectors.roulette_selector import RouletteSelector
+from knapsack.selectors.tournament_selector import TournamentSelector
 
-# create DataInterface object based on csv file
+# testing imports
+from tests.test_execution_time import (
+    measure_execution_time,
+    plot_execution_speed,
+)
+from tests.test_mutation_impact import (
+    plot_mutation_diversity,
+    test_mutation_impact,
+)
+from tests.test_mutation_impact_by_selector import (
+    plot_mutation_diversity_by_selector,
+    test_mutation_diversity_by_selector,
+)
+from tests.test_selection_methods import (
+    analyze_results,
+    plot_comparison,
+    test_selection_methods,
+)
+
 dataset = DataInterface.from_csv("datasets/dataset.csv")
 
-# get the random problem out of the dataset
+# random problem/specific problem from the dataset
 problem = dataset.random_problem()
-
-# pick problems from the available datasets
-# problem = dataset.chromosome_datasets[0]
+problem = dataset.chromosome_datasets[100]
 
 # FitnessEvaluator:
-# evaluator = FitnessEvaluator(problem)
+fitness_evaluator = FitnessEvaluator(problem)
 # Very basic evaluator, that evaluates chromosome to 0, if weight exceeds the
 # capacity.
 
@@ -35,7 +53,7 @@ evaluator = ScalingFitnessEvaluator(problem)
 # of the algorithm, at the cost of the diversity of the population.
 
 # RandomSelector:
-# selector = RandomSelector()
+random_selector = RandomSelector()
 # Using RandomSelector is quite hard to get best solution out of the algorithm.
 # Its doing decent, when it comes to finding solutions when multiple weights
 # are involved, but fails miserably, when it comes to datasets, that contain
@@ -46,24 +64,27 @@ evaluator = ScalingFitnessEvaluator(problem)
 # solution, which is not something usable in any enviornment.
 
 # ElitismSelector:
-selector = ElitismSelector(evaluator)
+elitism_selector = ElitismSelector(evaluator)
 # (ElitismSelector + FitnessEvaluator)
 # Using ElitismSelector, it is possible to get to the best solution within
 # 10 generations with population size of 10. Significant difference, compared
 # to the random. For this case with only 5 weight:value pairs it works well,
 # but for wider cases it might constrict the algorithm too much. )
 
+roulette_selector = RouletteSelector(evaluator)
+tournament_selector = TournamentSelector(evaluator)
+
 # display debug information
-dev = True
+dev = False
 
 # create genetic algorithm object
 alg = GeneticAlgorithm(
     problem,
     evaluator,
-    selector,
+    elitism_selector,
     # FixedPointCrossover(dev, fixed_point=3),
-    # MultiPointCrossover(points=[2, 3], dev=dev),
-    UniformCrossover(dev),
+    MultiPointCrossover(points=[2, 3], dev=dev),
+    # UniformCrossover(dev),
     population_size=10,
     num_generations=5,
     mutation_rate=0.01,
@@ -74,3 +95,26 @@ alg.evolve()
 
 # get the best solutions
 alg.get_best_solution(5)
+
+selectors = [
+    random_selector,
+    elitism_selector,
+    roulette_selector,
+    tournament_selector,
+]
+
+results = test_selection_methods(alg, selectors, iterations=20)
+plot_comparison(results)
+analyze_results(results)
+
+exec_time = measure_execution_time(alg, selectors, iterations=20)
+plot_execution_speed(exec_time)
+
+mutation_rates = [0.01, 0.05, 0.1]
+diversity_results = test_mutation_impact(alg, mutation_rates, iterations=20)
+plot_mutation_diversity(diversity_results)
+
+diversity_by_selector = test_mutation_diversity_by_selector(
+    alg, selectors, mutation_rates, iterations=20
+)
+plot_mutation_diversity_by_selector(diversity_by_selector)

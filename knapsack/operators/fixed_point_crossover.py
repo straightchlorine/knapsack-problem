@@ -1,5 +1,4 @@
 import numpy as np
-import logging
 
 from knapsack.operators.crossover import Crossover
 
@@ -29,12 +28,6 @@ Test cases:
     Child 1 parts: [0 0 1 1] and [1]
     ====================
 """
-
-
-# logger
-logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
-)
 
 
 class FixedPointCrossover(Crossover):
@@ -67,18 +60,13 @@ class FixedPointCrossover(Crossover):
             np.concatenate([parent_a[point:], parent_b[:point]]),
         )
 
-        # Debug for presentation
+        # debug for presentation
         if self.dev:
-            logging.debug(
-                f"FixedPointCrossover:\nUsing crossover point {point}"
-            )
-            logging.debug(f"Crossover on {parent_a} and {parent_b}")
-            logging.debug(f"Generated children: {genes[0]} and {genes[1]}")
-            logging.debug(
-                f"Child 0 parts: {parent_a[:point]} and {parent_b[point:]}"
-            )
-            logging.debug(
-                f"Child 1 parts: {parent_a[point:]} and {parent_b[:point]}"
-            )
+            print(f"FixedPointCrossover:\nUsing crossover point {point}")
+            print(f"Crossover on {parent_a} and {parent_b}")
+            print(f"Generated children: {genes[0]} and {genes[1]}")
+            print(f"Child 0 parts: {parent_a[:point]} and {parent_b[point:]}")
+            print(f"Child 1 parts: {parent_a[point:]} and {parent_b[:point]}")
+            print(20 * "=")
 
         return np.array([genes[0], genes[1]])
