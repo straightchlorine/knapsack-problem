@@ -12,6 +12,7 @@ from knapsack.analyze.tournament_selector import (
 from knapsack.dataset import DataInterface
 from knapsack.evaluators.fitness import ScalingFitnessEvaluator
 from knapsack.genetic_algorithm import GeneticAlgorithm
+from knapsack.mutations.bitflip_mutation import BitFlipMutation
 from knapsack.operators.fixed_point_crossover import FixedPointCrossover
 from knapsack.operators.multi_point_crossover import MultiPointCrossover
 from knapsack.operators.uniform_crossover import UniformCrossover
@@ -36,7 +37,10 @@ selector = RouletteSelector(evaluator)
 crossover = MultiPointCrossover(points=[2, 3], dev=dev)
 
 population_sizes = [6, 10, 50]
+
 mutation_rates = [0.01, 0.05, 0.1]
+mutation_operator = BitFlipMutation(mutation_rates[0])
+
 selectors = [
     RandomSelector(),
     RouletteSelector(evaluator),
@@ -44,26 +48,28 @@ selectors = [
     ElitismSelector(evaluator),
 ]
 
+
 alg = GeneticAlgorithm(
     problem,
     evaluator,
     selector,
     crossover,
+    mutation_operator,
     population_size=population_size,
     num_generations=num_generations,
-    mutation_rate=mutation_rate,
 )
 alg.dev = dev
 
 # List 4
 # -------------------------------------------------------------
+mutation_operator = BitFlipMutation(mutation_rate)
 population_impact_analysis(
     GeneticAlgorithm,
     problem,
     evaluator,
     selector,
     crossover,
-    mutation_rate,
+    mutation_operator,
     num_generations,
     population_sizes,
 )
@@ -100,11 +106,13 @@ selectors = [
 ]
 generations = [5]
 crossover_operators = [MultiPointCrossover(points=[2, 3], dev=dev)]
+mutation_operators = [BitFlipMutation(mutation_rate)]
 combined_params_impact(
     GeneticAlgorithm,
     problem,
     population_sizes,
     mutation_rates,
+    mutation_operators,
     selectors,
     generations,
     crossover_operators,

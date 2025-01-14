@@ -21,7 +21,7 @@ def mutation_metric_impact_analysis(alg: GeneticAlgorithm, mutation_rates: list[
 def _measure_metrics(alg: GeneticAlgorithm, mutation_rates: list[float]):
     results = {}
     for rate in mutation_rates:
-        alg.mutation_rate = rate
+        alg.mutation_operator.probability = rate
         execution_time = alg.evolve()
 
         results[rate] = {

@@ -9,6 +9,7 @@ import seaborn as sns
 from knapsack.dataset import Dataset
 from knapsack.evaluators.evaluator import Evaluator
 from knapsack.genetic_algorithm import GeneticAlgorithm
+from knapsack.mutations.mutation import Mutation
 from knapsack.operators.crossover import Crossover
 from knapsack.selectors.selector import Selector
 
@@ -18,6 +19,7 @@ def combined_params_impact(
     problem: Dataset,
     population_sizes: list[int],
     mutation_rates: list[float],
+    mutation_operators: Sequence[Mutation],
     selectors: Sequence[Selector],
     generations: list[int],
     operators: Sequence[Crossover],
@@ -28,6 +30,7 @@ def combined_params_impact(
         problem,
         population_sizes,
         mutation_rates,
+        mutation_operators,
         selectors,
         generations,
         operators,
@@ -42,6 +45,7 @@ def _measure_metrics(
     problem: Dataset,
     population_sizes: list[int],
     mutation_rates: list[float],
+    mutation_operators: Sequence[Mutation],
     selectors: Sequence[Selector],
     generations: list[int],
     operators: Sequence[Crossover],
@@ -55,8 +59,9 @@ def _measure_metrics(
         mutation_rate,
         selector,
         gens,
-        operator,
+        crossover_operator,
         evaluator,
+        mutation_operator,
     ) in product(
         population_sizes,
         mutation_rates,
@@ -64,26 +69,30 @@ def _measure_metrics(
         generations,
         operators,
         evaluators,
+        mutation_operators,
     ):
         # set appropriate evaluator to the selector
         if hasattr(type(selector), "evaluator"):
             selector.evaluator = evaluator
 
+        # set an appropriate probability to the mutation operator
+        mutation_operator.probability = mutation_rate
+
         alg = alg_class(
             problem,
             evaluator,
             selector,
-            operator,
+            crossover_operator,
+            mutation_operator,
             population_size=population_size,
             num_generations=gens,
-            mutation_rate=mutation_rate,
         )
 
         execution_time = alg.evolve()
 
         prefix = f"{population_size}_{mutation_rate}_{gens}-"
         selector_name = type(selector).__name__[:3]
-        operator_name = type(operator).__name__[:3]
+        operator_name = type(crossover_operator).__name__[:3]
         evaluator_name = type(evaluator).__name__[:3]
         key = f"{prefix}sel={selector_name}_op={operator_name}_eval={evaluator_name}"
 
@@ -91,7 +100,7 @@ def _measure_metrics(
             "population_size": population_size,
             "mutation_rate": mutation_rate,
             "selector": type(selector).__name__,
-            "operator": type(operator).__name__,
+            "operator": type(crossover_operator).__name__,
             "evaluator": type(evaluator).__name__,
             "generations": gens,
         }

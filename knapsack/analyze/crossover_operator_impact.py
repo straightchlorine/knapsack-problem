@@ -20,7 +20,7 @@ def crossover_operator_impact_analysis(
 def _measure_metrics(alg: GeneticAlgorithm, crossover_operators: list[Crossover]):
     results = {}
     for crossover_operator in crossover_operators:
-        alg.operator = crossover_operator
+        alg.crossover_operator = crossover_operator
         execution_time = alg.evolve()
 
         results[type(crossover_operator).__name__] = {

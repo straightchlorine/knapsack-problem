@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from knapsack.dataset import Dataset
 from knapsack.evaluators.evaluator import Evaluator
 from knapsack.genetic_algorithm import GeneticAlgorithm
+from knapsack.mutations.mutation import Mutation
 from knapsack.operators.crossover import Crossover
 from knapsack.selectors.selector import Selector
 
@@ -13,7 +14,7 @@ def population_impact_analysis(
     evaluator: Evaluator,
     selector: Selector,
     crossover_operator: Crossover,
-    mutation_rate: float,
+    mutation_operator: Mutation,
     generations: int,
     population_sizes: list[int],
 ):
@@ -35,7 +36,7 @@ def population_impact_analysis(
         evaluator,
         selector,
         crossover_operator,
-        mutation_rate,
+        mutation_operator,
         generations,
         population_sizes,
     )
@@ -48,7 +49,7 @@ def _measure_metrics(
     evaluator: Evaluator,
     selector: Selector,
     crossover: Crossover,
-    mutation_rate: float,
+    mutation_operator: Mutation,
     num_generations: int,
     population_sizes: list[int],
 ):
@@ -59,9 +60,9 @@ def _measure_metrics(
             evaluator,
             selector,
             crossover,
+            mutation_operator,
             population_size=size,
             num_generations=num_generations,
-            mutation_rate=mutation_rate,
         )
         execution_time = alg.evolve()
 

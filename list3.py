@@ -3,6 +3,7 @@ from knapsack.analyze.mutation_impact import mutation_impact
 from knapsack.dataset import DataInterface
 from knapsack.evaluators.fitness import ScalingFitnessEvaluator
 from knapsack.genetic_algorithm import GeneticAlgorithm
+from knapsack.mutations.bitflip_mutation import BitFlipMutation
 from knapsack.operators.multi_point_crossover import MultiPointCrossover
 from knapsack.performance.selector_execution_time import selector_time_efficiency
 from knapsack.performance.selector_mutation_impact import selector_diversity_impact
@@ -26,6 +27,7 @@ mutation_rate = 0.01
 evaluator = ScalingFitnessEvaluator(problem)
 selector = RouletteSelector(evaluator)
 crossover = MultiPointCrossover(points=[2, 3], dev=dev)
+mutation_operator = BitFlipMutation(mutation_rate)
 
 mutation_rates = [0.01, 0.05, 0.1]
 selectors = [
@@ -40,6 +42,7 @@ alg = GeneticAlgorithm(
     evaluator,
     selector,
     crossover,
+    mutation_operator,
     population_size=population_size,
     num_generations=num_generations,
     mutation_rate=mutation_rate,

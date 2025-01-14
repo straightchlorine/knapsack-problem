@@ -3,6 +3,7 @@ import time
 import numpy as np
 
 from knapsack.evaluators.evaluator import Evaluator
+from knapsack.mutations.mutation import Mutation
 from knapsack.operators.crossover import Crossover
 from knapsack.population import Population
 from knapsack.selectors.selector import Selector
@@ -24,7 +25,8 @@ class GeneticAlgorithm:
         dataset,
         evaluator: Evaluator,
         selector: Selector,
-        operator: Crossover,
+        crossover_operator: Crossover,
+        mutation_operator: Mutation,
         population_size=100,
         num_generations=500,
         mutation_rate=0.01,
@@ -44,8 +46,15 @@ class GeneticAlgorithm:
         self.selector = selector
         print(selector)
 
-        self.operator = operator
-        print(operator)
+        self.crossover_operator = crossover_operator
+        print(crossover_operator)
+
+        self.mutation_operator = mutation_operator
+
+        if not self.mutation_operator.probability:
+            self.mutation_operator.probability = mutation_rate
+
+        print(mutation_operator)
 
         # create and initialize the first population
         self.population = Population(
@@ -54,12 +63,7 @@ class GeneticAlgorithm:
         self.population.initialize()
 
     def mutate(self, genes):
-        # iterate through the genes
-        for i in genes:
-            # if randomly selected probability is less than set, flip the genes
-            if np.random.rand() < self.mutation_rate:
-                genes[i] = 1 - genes[i]
-        return genes
+        self.mutation_operator.mutate(genes)
 
     def new_generation(self):
         # new generation
@@ -73,7 +77,7 @@ class GeneticAlgorithm:
             parent1, parent2 = parents
 
             # create a child by crossover and mutation
-            children = self.operator.crossover(parent1, parent2)
+            children = self.crossover_operator.crossover(parent1, parent2)
 
             # mutate the children
             for child in children:
@@ -164,8 +168,7 @@ class GeneticAlgorithm:
     def get_population_statistics(self):
         """Gather fitness statistics for the current population."""
         fitness_scores = [
-            self.evaluator.evaluate(chrom)
-            for chrom in self.population.chromosomes
+            self.evaluator.evaluate(chrom) for chrom in self.population.chromosomes
         ]
         best_fitness = max(fitness_scores)
         avg_fitness = sum(fitness_scores) / len(fitness_scores)

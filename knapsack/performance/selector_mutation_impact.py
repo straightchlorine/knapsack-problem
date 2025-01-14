@@ -40,7 +40,7 @@ def _measure_diversity_by_selector(
         diversity_results[selector_name] = {}
 
         for mutation_rate in mutation_rates:
-            algorithm.mutation_rate = mutation_rate
+            algorithm.mutation_operator.probability = mutation_rate
             diversity_per_run = []
 
             for _ in range(iterations):
