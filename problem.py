@@ -1,5 +1,35 @@
 #!/usr/bin/env python
 
+from knapsack import population
+from knapsack.analyze.analyze_combined_parameters import (
+    analyze_combined_parameters,
+    combined_analysis,
+)
+from knapsack.analyze.analyze_crossover import (
+    analyze_crossover_methods,
+    crossover_operator_analysis,
+    plot_crossover_analysis,
+)
+from knapsack.analyze.analyze_mutation import (
+    analyze_mutation_probability,
+    mutation_analysis,
+    plot_mutation_analysis,
+)
+from knapsack.analyze.analyze_population_size import (
+    analyze_population_size,
+    plot_population_analysis,
+    population_analysis,
+)
+from knapsack.analyze.analyze_selectors import (
+    analyze_selection_methods,
+    plot_selection_analysis,
+    selection_analysis,
+)
+from knapsack.analyze.analyze_tournament_to_generations import (
+    analyze_tournament_selection,
+    plot_tournament_selector_analysis,
+    tournament_selector_analysis,
+)
 from knapsack.dataset import DataInterface
 from knapsack.evaluators.fitness import (
     FitnessEvaluator,
@@ -29,7 +59,7 @@ from tests.test_mutation_impact_by_selector import (
 )
 from tests.test_selection_methods import (
     analyze_results,
-    plot_comparison,
+    plot_test_selection,
     test_selection_methods,
 )
 
@@ -91,10 +121,10 @@ alg = GeneticAlgorithm(
 )
 
 # start the algorithm
-alg.evolve()
+# alg.evolve()
 
 # get the best solutions
-alg.get_best_solution(5)
+# alg.get_best_solution(5)
 
 selectors = [
     random_selector,
@@ -103,18 +133,72 @@ selectors = [
     tournament_selector,
 ]
 
-results = test_selection_methods(alg, selectors, iterations=20)
-plot_comparison(results)
-analyze_results(results)
 
-exec_time = measure_execution_time(alg, selectors, iterations=20)
-plot_execution_speed(exec_time)
+# List 3
+# -------------------------------------------------------------
+population_sizes = [2, 6, 10, 50, 200]
+mutation_rate = 0.01
+generations = 5
+evaluator = ScalingFitnessEvaluator(problem)
+selector = RouletteSelector(evaluator)
+crossover_operator = MultiPointCrossover(points=[2, 3], dev=dev)
 
+list3 = False
+if list3:
+    population_analysis(
+        GeneticAlgorithm,
+        problem,
+        evaluator,
+        selector,
+        crossover_operator,
+        mutation_rate,
+        generations,
+        population_sizes,
+    )
+    # -------------------------------------------------------------
+    evaluator = ScalingFitnessEvaluator(problem)
+    selectors = [
+        RandomSelector(),
+        ElitismSelector(evaluator),
+        RouletteSelector(evaluator),
+        TournamentSelector(evaluator),
+    ]
+    selection_analysis(alg, selectors)
+    # -------------------------------------------------------------
+    dev = False
+    crossover_operators = [
+        FixedPointCrossover(fixed_point=3, dev=dev),
+        MultiPointCrossover(points=[2, 3], dev=dev),
+        UniformCrossover(dev=dev),
+    ]
+    crossover_operator_analysis(alg, crossover_operators)
+    # -------------------------------------------------------------
+    mutation_rates = [0.01, 0.05, 0.1, 0.2, 0.8]
+    mutation_analysis(alg, mutation_rates)
+    # -------------------------------------------------------------
+    selector = TournamentSelector(evaluator)
+    tournament_selector_analysis(alg, selector, [2, 5, 10], [2, 3, 4])
+    # -------------------------------------------------------------
+
+population_sizes = [6, 10, 50]
 mutation_rates = [0.01, 0.05, 0.1]
-diversity_results = test_mutation_impact(alg, mutation_rates, iterations=20)
-plot_mutation_diversity(diversity_results)
+evaluator = ScalingFitnessEvaluator(problem)
+selectors = [
+    RandomSelector(),
+    ElitismSelector(evaluator),
+    TournamentSelector(evaluator),
+]
+generations = 5
+crossover_operator = MultiPointCrossover(points=[2, 3], dev=dev)
 
-diversity_by_selector = test_mutation_diversity_by_selector(
-    alg, selectors, mutation_rates, iterations=20
+combined_analysis(
+    GeneticAlgorithm,
+    problem,
+    population_sizes,
+    mutation_rates,
+    selectors,
+    generations,
+    crossover_operator,
+    evaluator,
 )
-plot_mutation_diversity_by_selector(diversity_by_selector)
+# -------------------------------------------------------------

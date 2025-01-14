@@ -1,8 +1,14 @@
 import matplotlib.pyplot as plt
 
+from knapsack.genetic_algorithm import GeneticAlgorithm
+from knapsack.selectors.selector import Selector
 
-def test_mutation_diversity_by_selector(
-    algorithm, selectors, mutation_rates, iterations=10
+
+def selector_diversity_impact(
+    algorithm: GeneticAlgorithm,
+    selectors: list[Selector],
+    mutation_rates: list[float],
+    iterations=10,
 ):
     """Test the impact of mutation on diversity grouped by selectors.
 
@@ -15,6 +21,18 @@ def test_mutation_diversity_by_selector(
     Returns:
         dict: Nested dictionary with selectors as keys and mutation rate results as sub-keys.
     """
+    diversity_by_selector = _measure_diversity_by_selector(
+        algorithm, selectors, mutation_rates, iterations
+    )
+    plot_selector_diversity(diversity_by_selector)
+
+
+def _measure_diversity_by_selector(
+    algorithm: GeneticAlgorithm,
+    selectors: list[Selector],
+    mutation_rates: list[float],
+    iterations=10,
+):
     diversity_results = {}
     for selector in selectors:
         algorithm.selector = selector
@@ -26,8 +44,8 @@ def test_mutation_diversity_by_selector(
             diversity_per_run = []
 
             for _ in range(iterations):
-                algorithm.evolve()  # Run the genetic algorithm
-                diversity = algorithm.measure_diversity()
+                algorithm.evolve()
+                diversity = algorithm.population.measure_diversity()
                 diversity_per_run.append(diversity)
 
             diversity_results[selector_name][mutation_rate] = diversity_per_run
@@ -35,16 +53,12 @@ def test_mutation_diversity_by_selector(
     return diversity_results
 
 
-def plot_mutation_diversity_by_selector(diversity_results):
-    """Plot the impact of mutation rates on diversity grouped by selectors.
-
-    Args:
-        diversity_results (dict): Nested dictionary with selector names and mutation rate results.
-    """
+def plot_selector_diversity(results):
+    """Plot the impact of mutation rates on diversity grouped by selectors."""
     plt.figure(figsize=(15, 10))
 
-    for selector, mutation_data in diversity_results.items():
-        plt.subplot(2, 2, list(diversity_results.keys()).index(selector) + 1)
+    for selector, mutation_data in results.items():
+        plt.subplot(2, 2, list(results.keys()).index(selector) + 1)
         for rate, diversities in mutation_data.items():
             plt.plot(
                 range(1, len(diversities) + 1),

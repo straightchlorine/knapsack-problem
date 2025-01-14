@@ -1,9 +1,14 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+from knapsack.genetic_algorithm import GeneticAlgorithm
+from knapsack.selectors.selector import Selector
 
-def test_selection_methods(algorithm, selectors, iterations=10):
-    """Test different selection methods and collect solution data.
+
+def selector_effectiveness(
+    algorithm: GeneticAlgorithm, selectors: list[Selector], iterations=10
+):
+    """Test how effective each selector is at procuring high fitness solutions.
 
     Args:
         algorithm: Genetic algorithm instance.
@@ -13,6 +18,16 @@ def test_selection_methods(algorithm, selectors, iterations=10):
     Returns:
         dict: Dictionary containing fitness results for each selector.
     """
+    results = _selection_performance_analysis(algorithm, selectors, iterations)
+    plot_selector_performance(results)
+    selection_performance_metrics(results)
+    return results
+
+
+def _selection_performance_analysis(
+    algorithm: GeneticAlgorithm, selectors: list[Selector], iterations=10
+):
+    """Test different selection methods and collect data about quality of the solutions."""
     results = {}
     for selector in selectors:
         algorithm.selector = selector
@@ -25,12 +40,8 @@ def test_selection_methods(algorithm, selectors, iterations=10):
     return results
 
 
-def plot_comparison(results):
-    """Plot the comparison of selection methods.
-
-    Args:
-        results (dict): Dictionary containing fitness results for each selector.
-    """
+def plot_selector_performance(results):
+    """Plot the comparison of selection methods."""
     plt.figure(figsize=(10, 6))
 
     for method, fitness_values in results.items():
@@ -49,7 +60,7 @@ def plot_comparison(results):
     plt.show()
 
 
-def analyze_results(results):
+def selection_performance_metrics(results):
     """Print statistics for each selection method.
 
     Args:
@@ -64,3 +75,4 @@ def analyze_results(results):
             f"{method}: Mean Fitness = {mean_fitness:.2f}, "
             f"Std Dev = {std_dev:.2f}"
         )
+    print("=" * 40)

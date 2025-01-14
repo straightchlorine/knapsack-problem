@@ -85,13 +85,46 @@ class GeneticAlgorithm:
 
     def evolve(self):
         """Evolve the population for a set number of generations."""
+        self.best_fitness = []
+        self.average_fitness = []
+        self.worst_fitness = []
+        self.diversity = []
+
         with Timer() as timer:
-            for _ in range(self.num_generations):
+            for generation in range(self.num_generations):
+                best_solution = self.get_best_solution()
+                best_fitness = self.get_solution_fitness(best_solution)
+                avg_fitness = np.mean(
+                    [
+                        self.get_solution_fitness(chrom)
+                        for chrom in self.population.chromosomes
+                    ]
+                )
+                worst_fitness = np.min(
+                    [
+                        self.get_solution_fitness(chrom)
+                        for chrom in self.population.chromosomes
+                    ]
+                )
+
+                diversity = self.population.measure_diversity()
+
+                self.best_fitness.append(best_fitness)
+                self.average_fitness.append(avg_fitness)
+                self.worst_fitness.append(worst_fitness)
+                self.diversity.append(diversity)
+
+                print(
+                    f"Generation {generation}: Best Fitness: {best_fitness:.2f}, "
+                    f"Average Fitness: {avg_fitness:.2f}, Diversity: {diversity:.2f}%"
+                )
+
                 self.population = self.new_generation()
                 self.population.update_selector()
 
         print("=" * 35)
         print(f"Evolution took {timer.interval:.4f} miliseconds.")
+        return timer.interval
 
     def prompt(self, evaluated):
         """Prompt the evaluated chromosome.
@@ -125,10 +158,21 @@ class GeneticAlgorithm:
         """
         return self.evaluator.evaluate(solution)
 
-    def measure_diversity(self):
-        """Calculate genetic diversity in the population."""
-        unique = {tuple(c) for c in self.population.chromosomes}
-        return len(unique) / len(self.population.chromosomes) * 100
+    def get_population_statistics(self):
+        """Gather fitness statistics for the current population."""
+        fitness_scores = [
+            self.evaluator.evaluate(chrom)
+            for chrom in self.population.chromosomes
+        ]
+        best_fitness = max(fitness_scores)
+        avg_fitness = sum(fitness_scores) / len(fitness_scores)
+        worst_fitness = min(fitness_scores)
+
+        return {
+            "best_fitness": best_fitness,
+            "average_fitness": avg_fitness,
+            "worst_fitness": worst_fitness,
+        }
 
     def get_best_solution(self, n=1):
         """Get the best solutions from the population.

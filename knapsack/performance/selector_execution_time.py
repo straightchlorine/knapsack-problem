@@ -1,20 +1,31 @@
+import time
 import matplotlib.pyplot as plt
 import numpy as np
 
+from knapsack.genetic_algorithm import GeneticAlgorithm
+from knapsack.selectors.selector import Selector
 
-def measure_execution_time(algorithm, selectors, iterations=10):
+
+def selector_time_efficiency(
+    alg: GeneticAlgorithm, selectors: list[Selector], iterations=10
+):
     """Measure the execution time for each selector.
 
     Args:
         algorithm: Genetic algorithm instance.
-        selectors (list): List of selector objects to test.
+        selectors (list[Selector]): List of selector objects to test.
         iterations (int): Number of test iterations for each selector.
 
     Returns:
         dict: Dictionary containing execution times for each selector.
     """
-    import time
+    exec_time = _measure(alg, selectors, iterations)
+    plot_selector_execution_speed(exec_time)
 
+
+def _measure(
+    algorithm: GeneticAlgorithm, selectors: list[Selector], iterations=10
+):
     speed_results = {}
     for selector in selectors:
         algorithm.selector = selector
@@ -27,14 +38,10 @@ def measure_execution_time(algorithm, selectors, iterations=10):
     return speed_results
 
 
-def plot_execution_speed(speed_results):
-    """Plot the execution speed for different selectors.
-
-    Args:
-        speed_results (dict): Dictionary with selector names and execution times.
-    """
+def plot_selector_execution_speed(result):
+    """Plot the execution speed for different selectors."""
     mean_times = {
-        selector: np.mean(times) for selector, times in speed_results.items()
+        selector: np.mean(times) for selector, times in result.items()
     }
 
     plt.figure(figsize=(10, 6))

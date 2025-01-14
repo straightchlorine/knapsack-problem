@@ -51,6 +51,11 @@ class Population:
         """
         return self.selector.select()
 
+    def measure_diversity(self):
+        """Calculate genetic diversity in the population."""
+        unique = {tuple(c) for c in self.chromosomes}
+        return len(unique) / len(self.chromosomes) * 100
+
     def add_chromosome(self, chromosome: np.ndarray):
         """Add a chromosome or a list of them to the population.
 
