@@ -1,10 +1,13 @@
 import numpy as np
 
+from knapsack.evaluators.evaluator import Evaluator
+
 
 class Selector:
     """Base class for the selector objects."""
 
     _population: np.ndarray
+    evaluator: Evaluator
 
     def __init__(self):
         pass
@@ -18,9 +21,7 @@ class Selector:
         Returns:
             list: List of selected chromosomes
         """
-        raise NotImplementedError(
-            'Method "select" must be implemented in a subclass.'
-        )
+        raise NotImplementedError('Method "select" must be implemented in a subclass.')
 
     @property
     def population(self):

@@ -1,12 +1,15 @@
 import matplotlib.pyplot as plt
 
-
-def selection_analysis(alg, selectors):
-    results = analyze_selection_methods(alg, selectors)
-    plot_selection_analysis(results)
+from knapsack.genetic_algorithm import GeneticAlgorithm
+from knapsack.selectors.selector import Selector
 
 
-def analyze_selection_methods(alg, selectors):
+def selector_impact_analysis(alg: GeneticAlgorithm, selectors: list[Selector]):
+    results = _measure_metrics(alg, selectors)
+    plot_selector_impact_metrics(results)
+
+
+def _measure_metrics(alg: GeneticAlgorithm, selectors: list[Selector]):
     results = {}
     for selector in selectors:
         alg.selector = selector
@@ -23,13 +26,8 @@ def analyze_selection_methods(alg, selectors):
     return results
 
 
-def plot_selection_analysis(results):
-    """
-    Visualize the results of different selection methods.
-
-    Args:
-        results (dict): Dictionary containing results for each selection method
-    """
+def plot_selector_impact_metrics(results):
+    """Visualise impact of different selectors on the metrics."""
     selectors = list(results.keys())
     num_generations = len(next(iter(results.values()))["diversity"])
     generations = range(num_generations)
@@ -39,9 +37,7 @@ def plot_selection_analysis(results):
 
     # fitness during evolution by generation
     fig, axes = plt.subplots(3, 1, figsize=(12, 12), sharex=True)
-    for i, metric in enumerate(
-        ["best_fitness", "average_fitness", "worst_fitness"]
-    ):
+    for i, metric in enumerate(["best_fitness", "average_fitness", "worst_fitness"]):
         for j, selector in enumerate(selectors):
             axes[i].plot(
                 generations,
@@ -57,6 +53,7 @@ def plot_selection_analysis(results):
     fig.suptitle("Fitness Evolution Across Selection Methods")
     plt.tight_layout(rect=(0, 0, 1, 0.96))
     plt.show()
+    # -------------------------------------
 
     # diversity plot
     plt.figure(figsize=(12, 8))
@@ -74,15 +71,16 @@ def plot_selection_analysis(results):
     plt.legend()
     plt.grid(True)
     plt.show()
+    # -------------------------------------
 
     # execution time comparison
     plt.figure(figsize=(12, 8))
-    execution_times = [
-        results[selector]["execution_time"] for selector in selectors
-    ]
+    execution_times = [results[selector]["execution_time"] for selector in selectors]
     plt.bar(selectors, execution_times, color=colors(range(num_selectors)))
     plt.xlabel("Selection Method")
     plt.ylabel("Execution Time (seconds)")
     plt.title("Execution Time by Selection Method")
     plt.xticks(rotation=45)
+
+    # -------------------------------------
     plt.show()

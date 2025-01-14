@@ -11,9 +11,9 @@ from knapsack.analyze.analyze_crossover import (
     plot_crossover_analysis,
 )
 from knapsack.analyze.analyze_mutation import (
-    analyze_mutation_probability,
-    mutation_analysis,
-    plot_mutation_analysis,
+    _measure_metrics,
+    mutation_metric_impact_analysis,
+    plot_mutation_impact,
 )
 from knapsack.analyze.analyze_population_size import (
     analyze_population_size,
@@ -145,60 +145,4 @@ crossover_operator = MultiPointCrossover(points=[2, 3], dev=dev)
 
 list3 = False
 if list3:
-    population_analysis(
-        GeneticAlgorithm,
-        problem,
-        evaluator,
-        selector,
-        crossover_operator,
-        mutation_rate,
-        generations,
-        population_sizes,
-    )
-    # -------------------------------------------------------------
-    evaluator = ScalingFitnessEvaluator(problem)
-    selectors = [
-        RandomSelector(),
-        ElitismSelector(evaluator),
-        RouletteSelector(evaluator),
-        TournamentSelector(evaluator),
-    ]
-    selection_analysis(alg, selectors)
-    # -------------------------------------------------------------
-    dev = False
-    crossover_operators = [
-        FixedPointCrossover(fixed_point=3, dev=dev),
-        MultiPointCrossover(points=[2, 3], dev=dev),
-        UniformCrossover(dev=dev),
-    ]
-    crossover_operator_analysis(alg, crossover_operators)
-    # -------------------------------------------------------------
-    mutation_rates = [0.01, 0.05, 0.1, 0.2, 0.8]
-    mutation_analysis(alg, mutation_rates)
-    # -------------------------------------------------------------
-    selector = TournamentSelector(evaluator)
-    tournament_selector_analysis(alg, selector, [2, 5, 10], [2, 3, 4])
-    # -------------------------------------------------------------
-
-population_sizes = [6, 10, 50]
-mutation_rates = [0.01, 0.05, 0.1]
-evaluator = ScalingFitnessEvaluator(problem)
-selectors = [
-    RandomSelector(),
-    ElitismSelector(evaluator),
-    TournamentSelector(evaluator),
-]
-generations = 5
-crossover_operator = MultiPointCrossover(points=[2, 3], dev=dev)
-
-combined_analysis(
-    GeneticAlgorithm,
-    problem,
-    population_sizes,
-    mutation_rates,
-    selectors,
-    generations,
-    crossover_operator,
-    evaluator,
-)
 # -------------------------------------------------------------

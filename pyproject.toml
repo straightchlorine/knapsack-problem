@@ -29,7 +29,7 @@ exclude = [
     "venv",
 ]
 
-line-length = 79
+line-length = 89
 indent-width = 4
 
 [tool.ruff.format]

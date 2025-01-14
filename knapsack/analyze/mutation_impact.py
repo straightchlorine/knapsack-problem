@@ -6,16 +6,19 @@ from knapsack.genetic_algorithm import GeneticAlgorithm
 def mutation_impact(
     algorithm: GeneticAlgorithm, mutation_rates: list[float], iterations=10
 ):
-    """Test the impact of mutation on diversity.
+    """Analyse the impact of mutation on diversity.
+
     Args:
         algorithm: Genetic algorithm instance.
         mutation_rates (list): List of mutation rates to test.
         iterations (int): Number of test iterations for each mutation rate.
+
     Returns:
         dict: Dictionary containing diversity results for each mutation rate.
     """
     diversity = measure_mutation_impact(algorithm, mutation_rates, iterations)
     plot_population_diversity(diversity)
+    return diversity
 
 
 def measure_mutation_impact(
@@ -34,11 +37,7 @@ def measure_mutation_impact(
 
 
 def plot_population_diversity(results):
-    """Plot the impact of mutation rates on diversity.
-
-    Args:
-        results (dict): Dictionary with mutation rates and diversity data.
-    """
+    """Plot the impact of mutation rates on diversity."""
     plt.figure(figsize=(10, 6))
     for rate, diversities in results.items():
         plt.plot(

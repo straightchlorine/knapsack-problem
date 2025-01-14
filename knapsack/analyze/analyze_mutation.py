@@ -1,12 +1,24 @@
 import matplotlib.pyplot as plt
 
-
-def mutation_analysis(alg, mutation_rates):
-    results = analyze_mutation_probability(alg, mutation_rates)
-    plot_mutation_analysis(results)
+from knapsack.genetic_algorithm import GeneticAlgorithm
 
 
-def analyze_mutation_probability(alg, mutation_rates):
+def mutation_metric_impact_analysis(alg: GeneticAlgorithm, mutation_rates: list[float]):
+    """Anlyze the impact of mutation rates on the metrics.
+
+    Args:
+        alg (GeneticAlgorithm): Genetic algorithm instance.
+        mutation_rates (list): List of mutation rates to test.
+
+    Returns:
+        dict: Dictionary containing results for each mutation
+    """
+    results = _measure_metrics(alg, mutation_rates)
+    plot_mutation_impact(results)
+    return results
+
+
+def _measure_metrics(alg: GeneticAlgorithm, mutation_rates: list[float]):
     results = {}
     for rate in mutation_rates:
         alg.mutation_rate = rate
@@ -23,13 +35,8 @@ def analyze_mutation_probability(alg, mutation_rates):
     return results
 
 
-def plot_mutation_analysis(results):
-    """
-    Visualize the results of different mutation probabilities.
-
-    Args:
-        results (dict): Dictionary containing results for each mutation probability
-    """
+def plot_mutation_impact(results):
+    """Visualise the impact of mutation on different metrics."""
     mutation_rates = list(results.keys())
     num_generations = len(next(iter(results.values()))["diversity"])
     generations = range(num_generations)
@@ -39,9 +46,7 @@ def plot_mutation_analysis(results):
 
     # fitness during evolution by generation
     fig, axes = plt.subplots(3, 1, figsize=(12, 12), sharex=True)
-    for i, metric in enumerate(
-        ["best_fitness", "average_fitness", "worst_fitness"]
-    ):
+    for i, metric in enumerate(["best_fitness", "average_fitness", "worst_fitness"]):
         for j, rate in enumerate(mutation_rates):
             axes[i].plot(
                 generations,
@@ -57,6 +62,7 @@ def plot_mutation_analysis(results):
     fig.suptitle("Fitness Evolution Across Mutation Probabilities")
     plt.tight_layout(rect=(0, 0, 1, 0.96))
     plt.show()
+    # -------------------------------------
 
     # diversity plot
     plt.figure(figsize=(12, 8))
@@ -74,15 +80,15 @@ def plot_mutation_analysis(results):
     plt.legend()
     plt.grid(True)
     plt.show()
+    # -------------------------------------
 
     # execution time comparison
     plt.figure(figsize=(12, 8))
-    execution_times = [
-        results[rate]["execution_time"] for rate in mutation_rates
-    ]
+    execution_times = [results[rate]["execution_time"] for rate in mutation_rates]
     plt.bar(mutation_rates, execution_times, color=colors(range(num_rates)))
     plt.xlabel("Mutation Probability")
     plt.ylabel("Execution Time (seconds)")
     plt.title("Execution Time by Mutation Probability")
     plt.xticks(rotation=45)
     plt.show()
+    # -------------------------------------

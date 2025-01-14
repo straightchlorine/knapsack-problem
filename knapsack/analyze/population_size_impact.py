@@ -1,17 +1,35 @@
 import matplotlib.pyplot as plt
 
+from knapsack.dataset import Dataset
+from knapsack.evaluators.evaluator import Evaluator
+from knapsack.genetic_algorithm import GeneticAlgorithm
+from knapsack.operators.crossover import Crossover
+from knapsack.selectors.selector import Selector
 
-def population_analysis(
-    alg_class,
-    problem,
-    evaluator,
-    selector,
-    crossover_operator,
-    mutation_rate,
-    generations,
-    population_sizes,
+
+def population_impact_analysis(
+    alg_class: type[GeneticAlgorithm],
+    problem: Dataset,
+    evaluator: Evaluator,
+    selector: Selector,
+    crossover_operator: Crossover,
+    mutation_rate: float,
+    generations: int,
+    population_sizes: list[int],
 ):
-    results = analyze_population_size(
+    """Measure and plot impact of population size on the metrics.
+
+    Args:
+        alg_class (class): Genetic algorithm class.
+        problem (Chromosome): Problem to solve.
+        evaluator (Evaluator): Evaluator object.
+        selector (Selector): Selector object.
+        crossover_operator (Crossover): Crossover operator.
+        mutation_rate (float): Mutation rate.
+        generations (int): Number of generations.
+        population_sizes (list): Population sizes to test.
+    """
+    results = _measure_metrics(
         alg_class,
         problem,
         evaluator,
@@ -21,18 +39,18 @@ def population_analysis(
         generations,
         population_sizes,
     )
-    plot_population_analysis(results)
+    plot_population_impact_metrics(results)
 
 
-def analyze_population_size(
-    alg_class,
-    problem,
-    evaluator,
-    selector,
-    crossover,
-    mutation_rate,
-    num_generations,
-    population_sizes,
+def _measure_metrics(
+    alg_class: type[GeneticAlgorithm],
+    problem: Dataset,
+    evaluator: Evaluator,
+    selector: Selector,
+    crossover: Crossover,
+    mutation_rate: float,
+    num_generations: int,
+    population_sizes: list[int],
 ):
     results = {}
     for size in population_sizes:
@@ -57,13 +75,8 @@ def analyze_population_size(
     return results
 
 
-def plot_population_analysis(results):
-    """
-    Visualize the results from the evolutionary algorithm analysis with improved clarity.
-
-    Args:
-        results (dict): Dictionary containing results for each population size
-    """
+def plot_population_impact_metrics(results):
+    """Visualize the population size's impact on metrics."""
     population_sizes = list(results.keys())
     num_generations = len(results[population_sizes[0]]["diversity"])
     generations = range(num_generations)
@@ -73,9 +86,7 @@ def plot_population_analysis(results):
 
     # fitness during evolution by generation
     fig, axes = plt.subplots(3, 1, figsize=(12, 12), sharex=True)
-    for i, metric in enumerate(
-        ["best_fitness", "average_fitness", "worst_fitness"]
-    ):
+    for i, metric in enumerate(["best_fitness", "average_fitness", "worst_fitness"]):
         for j, pop_size in enumerate(population_sizes):
             axes[i].plot(
                 generations,
@@ -91,6 +102,7 @@ def plot_population_analysis(results):
     fig.suptitle("Fitness Evolution Over Generations")
     plt.tight_layout(rect=(0, 0, 1, 0.96))
     plt.show()
+    # -------------------------------------
 
     # diversity plot by generation
     plt.figure(figsize=(12, 8))
@@ -108,16 +120,15 @@ def plot_population_analysis(results):
     plt.legend()
     plt.grid(True)
     plt.show()
+    # -------------------------------------
 
     # execution time plot
     plt.figure(figsize=(12, 8))
-    execution_times = [
-        results[size]["execution_time"] for size in population_sizes
-    ]
-    plt.bar(
-        population_sizes, execution_times, color=colors(range(num_pop_sizes))
-    )
+    execution_times = [results[size]["execution_time"] for size in population_sizes]
+    plt.bar(population_sizes, execution_times, color=colors(range(num_pop_sizes)))
     plt.xlabel("Population Size")
     plt.ylabel("Execution Time (seconds)")
     plt.title("Execution Time by Population Size")
+    # -------------------------------------
+
     plt.show()

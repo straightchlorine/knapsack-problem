@@ -29,6 +29,7 @@ class GeneticAlgorithm:
         num_generations=500,
         mutation_rate=0.01,
     ):
+        self.dev = False
         self.dataset = dataset
         self.gene_length = self.dataset.length
 
@@ -114,16 +115,18 @@ class GeneticAlgorithm:
                 self.worst_fitness.append(worst_fitness)
                 self.diversity.append(diversity)
 
-                print(
-                    f"Generation {generation}: Best Fitness: {best_fitness:.2f}, "
-                    f"Average Fitness: {avg_fitness:.2f}, Diversity: {diversity:.2f}%"
-                )
+                if self.dev:
+                    print(
+                        f"Generation {generation}: Best Fitness: {best_fitness:.2f}, "
+                        f"Average Fitness: {avg_fitness:.2f}, Diversity: {diversity:.2f}%"
+                    )
 
                 self.population = self.new_generation()
                 self.population.update_selector()
 
-        print("=" * 35)
-        print(f"Evolution took {timer.interval:.4f} miliseconds.")
+        if self.dev:
+            print("=" * 35)
+            print(f"Evolution took {timer.interval:.4f} miliseconds.")
         return timer.interval
 
     def prompt(self, evaluated):
@@ -189,7 +192,8 @@ class GeneticAlgorithm:
             reverse=True,
         )[:n]
 
-        for evaluated in ordered:
-            self.prompt(evaluated)
+        if self.dev:
+            for evaluated in ordered:
+                self.prompt(evaluated)
 
         return ordered[0]

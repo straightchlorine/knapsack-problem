@@ -4,12 +4,8 @@ from knapsack.dataset import DataInterface
 from knapsack.evaluators.fitness import ScalingFitnessEvaluator
 from knapsack.genetic_algorithm import GeneticAlgorithm
 from knapsack.operators.multi_point_crossover import MultiPointCrossover
-from knapsack.performance.selector_execution_time import (
-    selector_time_efficiency,
-)
-from knapsack.performance.selector_mutation_impact import (
-    selector_diversity_impact,
-)
+from knapsack.performance.selector_execution_time import selector_time_efficiency
+from knapsack.performance.selector_mutation_impact import selector_diversity_impact
 from knapsack.performance.selector_performance import selector_effectiveness
 from knapsack.selectors.elitism_selector import ElitismSelector
 from knapsack.selectors.random_selector import RandomSelector
@@ -48,6 +44,7 @@ alg = GeneticAlgorithm(
     num_generations=num_generations,
     mutation_rate=mutation_rate,
 )
+alg.dev = dev
 
 selector_effectiveness(alg, selectors, iterations=20)
 selector_time_efficiency(alg, selectors, iterations=20)
