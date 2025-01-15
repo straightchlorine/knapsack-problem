@@ -19,7 +19,7 @@ class Mutation:
     def __str__(self):
         return f"Mutation: {self.__class__.__name__}"
 
-    def mutate(self, population):
+    def mutate(self, population, generation=0):
         """Apply mutation to the population.
 
         This method must be implemented by subclasses to define

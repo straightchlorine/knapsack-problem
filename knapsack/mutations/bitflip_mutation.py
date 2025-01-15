@@ -5,7 +5,7 @@ from knapsack.mutations.mutation import Mutation
 class BitFlipMutation(Mutation):
     """Applies bit-flip mutation to a binary population."""
 
-    def mutate(self, population):
+    def mutate(self, population) -> np.ndarray:
         """Flip bits in chromosomes with the given mutation probability.
 
         Returns:

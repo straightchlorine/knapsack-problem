@@ -12,6 +12,7 @@ def selector_impact_analysis(alg: GeneticAlgorithm, selectors: list[Selector]):
 def _measure_metrics(alg: GeneticAlgorithm, selectors: list[Selector]):
     results = {}
     for selector in selectors:
+        alg.clear_metrics()
         alg.selector = selector
         execution_time = alg.evolve()
 

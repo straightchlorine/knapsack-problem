@@ -30,6 +30,7 @@ class GeneticAlgorithm:
         population_size=100,
         num_generations=500,
         mutation_rate=0.01,
+        strategy="value_biased",
     ):
         self.dev = False
         self.dataset = dataset
@@ -39,9 +40,13 @@ class GeneticAlgorithm:
         self.num_generations = num_generations
         self.mutation_rate = mutation_rate
 
-        # set the evaluator and selector objects
         self.evaluator = evaluator
         print(evaluator)
+
+        self.mutation_operator = mutation_operator
+        if not self.mutation_operator.probability:
+            self.mutation_operator.probability = mutation_rate
+        print(mutation_operator)
 
         self.selector = selector
         print(selector)
@@ -49,26 +54,16 @@ class GeneticAlgorithm:
         self.crossover_operator = crossover_operator
         print(crossover_operator)
 
-        self.mutation_operator = mutation_operator
-
-        if not self.mutation_operator.probability:
-            self.mutation_operator.probability = mutation_rate
-
-        print(mutation_operator)
-
         # create and initialize the first population
         self.population = Population(
-            self.selector, self.population_size, self.gene_length
+            self.dataset, self.selector, self.population_size, self.gene_length
         )
-        self.population.initialize()
+        self.population.initialize_with_strategy(strategy)
 
-    def mutate(self, genes):
-        self.mutation_operator.mutate(genes)
-
-    def new_generation(self):
+    def new_generation(self, current_generation):
         # new generation
         new_population = Population(
-            self.selector, self.population_size, self.gene_length
+            self.dataset, self.selector, self.population_size, self.gene_length
         )
 
         while len(new_population.chromosomes) < self.population_size:
@@ -80,8 +75,10 @@ class GeneticAlgorithm:
             children = self.crossover_operator.crossover(parent1, parent2)
 
             # mutate the children
-            for child in children:
-                child = self.mutate(child)
+            if hasattr(self.mutation_operator, "max_generations"):
+                children = self.mutation_operator.mutate(children, current_generation)
+            else:
+                children = self.mutation_operator.mutate(children)
 
             # add the child to the new population
             new_population.add_chromosome(children)
@@ -125,13 +122,19 @@ class GeneticAlgorithm:
                         f"Average Fitness: {avg_fitness:.2f}, Diversity: {diversity:.2f}%"
                     )
 
-                self.population = self.new_generation()
+                self.population = self.new_generation(generation)
                 self.population.update_selector()
 
         if self.dev:
             print("=" * 35)
             print(f"Evolution took {timer.interval:.4f} miliseconds.")
         return timer.interval
+
+    def clear_metrics(self):
+        self.best_fitness = []
+        self.average_fitness = []
+        self.worst_fitness = []
+        self.diversity = []
 
     def prompt(self, evaluated):
         """Prompt the evaluated chromosome.
