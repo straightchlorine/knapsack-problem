@@ -1,9 +1,9 @@
 from itertools import product
 from typing import Optional, Sequence
 
-from pandas.core.api import DataFrame
 import matplotlib.pyplot as plt
 import pandas as pd
+from pandas.core.api import DataFrame
 import seaborn as sns
 
 from knapsack.dataset import Dataset

@@ -27,6 +27,7 @@ def measure_mutation_impact(
     diversity_results = {}
     for mutation_rate in mutation_rates:
         algorithm.mutation_operator.probability = mutation_rate
+        algorithm.clear_metrics()
         diversity_per_run = []
         for _ in range(iterations):
             algorithm.evolve()

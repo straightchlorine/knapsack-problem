@@ -145,12 +145,15 @@ class GeneticAlgorithm:
             print(f"Evolution took {timer.interval:.4f} miliseconds.")
         return timer.interval
 
-    def clear_metrics(self):
+    def clear_metrics(self, init_strategy="value_biased"):
         self.best_fitness = []
         self.average_fitness = []
         self.worst_fitness = []
         self.diversity = []
         self.optimal_generation = None
+
+        # reset the population
+        self.population.initialize_with_strategy(init_strategy)
 
     def prompt(self, evaluated):
         """Prompt the evaluated chromosome.

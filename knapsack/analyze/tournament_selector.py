@@ -25,8 +25,9 @@ def _measure_metrics(
     for generation in generations:
         for tournament_size in tournament_sizes:
             alg.selector = tournament_selector
-            alg.num_generations = generation
             alg.selector.tournament_size = tournament_size
+            alg.num_generations = generation
+            alg.clear_metrics()
             execution_time = alg.evolve()
 
             key = f"Generations_{generations}_TournamentSize_{tournament_size}"

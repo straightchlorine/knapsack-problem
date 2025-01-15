@@ -21,6 +21,7 @@ def _measure_metrics(alg: GeneticAlgorithm, crossover_operators: list[Crossover]
     results = {}
     for crossover_operator in crossover_operators:
         alg.crossover_operator = crossover_operator
+        alg.clear_metrics()
         execution_time = alg.evolve()
 
         results[type(crossover_operator).__name__] = {
