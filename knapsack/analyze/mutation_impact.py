@@ -1,39 +1,37 @@
 import matplotlib.pyplot as plt
 
+from knapsack.analyze.utility import ExperimentConfig, init_alg
 from knapsack.genetic_algorithm import GeneticAlgorithm
 
 
 def mutation_impact(
-    algorithm: GeneticAlgorithm, mutation_rates: list[float], iterations=10
+    alg: type[GeneticAlgorithm],
+    config: ExperimentConfig,
+    iterations=10,
 ):
-    """Analyse the impact of mutation on diversity.
-
-    Args:
-        algorithm: Genetic algorithm instance.
-        mutation_rates (list): List of mutation rates to test.
-        iterations (int): Number of test iterations for each mutation rate.
-
-    Returns:
-        dict: Dictionary containing diversity results for each mutation rate.
-    """
-    diversity = measure_mutation_impact(algorithm, mutation_rates, iterations)
+    algorithm = init_alg(alg, config)
+    diversity = measure_mutation_impact(algorithm, config, iterations)
     plot_population_diversity(diversity)
     return diversity
 
 
 def measure_mutation_impact(
-    algorithm: GeneticAlgorithm, mutation_rates: list[float], iterations=10
+    alg: GeneticAlgorithm,
+    config: ExperimentConfig,
+    iterations=10,
 ):
     diversity_results = {}
-    for mutation_rate in mutation_rates:
-        algorithm.mutation_operator.probability = mutation_rate
-        algorithm.clear_metrics()
+    for mutation_rate in config.mutation_rates:
+        alg.mutation_operator.probability = mutation_rate
+        alg.clear_metrics()
         diversity_per_run = []
+
         for _ in range(iterations):
-            algorithm.evolve()
-            diversity = algorithm.population.measure_diversity()
+            alg.evolve()
+            diversity = alg.population.measure_diversity()
             diversity_per_run.append(diversity)
         diversity_results[mutation_rate] = diversity_per_run
+
     return diversity_results
 
 

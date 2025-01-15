@@ -1,78 +1,47 @@
 import matplotlib.pyplot as plt
 
-from knapsack.dataset import Dataset
-from knapsack.evaluators.evaluator import Evaluator
+from knapsack.analyze.utility import ExperimentConfig, ExperimentResults, init_alg
 from knapsack.genetic_algorithm import GeneticAlgorithm
-from knapsack.mutations.mutation import Mutation
-from knapsack.operators.crossover import Crossover
-from knapsack.selectors.selector import Selector
 
 
 def population_impact_analysis(
-    alg_class: type[GeneticAlgorithm],
-    problem: Dataset,
-    evaluator: Evaluator,
-    selector: Selector,
-    crossover_operator: Crossover,
-    mutation_operator: Mutation,
-    generations: int,
-    population_sizes: list[int],
+    alg: type[GeneticAlgorithm],
+    config: ExperimentConfig,
 ):
-    """Measure and plot impact of population size on the metrics.
-
-    Args:
-        alg_class (class): Genetic algorithm class.
-        problem (Chromosome): Problem to solve.
-        evaluator (Evaluator): Evaluator object.
-        selector (Selector): Selector object.
-        crossover_operator (Crossover): Crossover operator.
-        mutation_rate (float): Mutation rate.
-        generations (int): Number of generations.
-        population_sizes (list): Population sizes to test.
-    """
-    results = _measure_metrics(
-        alg_class,
-        problem,
-        evaluator,
-        selector,
-        crossover_operator,
-        mutation_operator,
-        generations,
-        population_sizes,
-    )
+    algorithm = init_alg(alg, config)
+    results = _measure_metrics(algorithm, config)
     plot_population_impact_metrics(results)
 
 
 def _measure_metrics(
-    alg_class: type[GeneticAlgorithm],
-    problem: Dataset,
-    evaluator: Evaluator,
-    selector: Selector,
-    crossover: Crossover,
-    mutation_operator: Mutation,
-    num_generations: int,
-    population_sizes: list[int],
+    alg: GeneticAlgorithm,
+    config: ExperimentConfig,
 ):
     results = {}
-    for size in population_sizes:
-        alg = alg_class(
-            problem,
-            evaluator,
-            selector,
-            crossover,
-            mutation_operator,
-            population_size=size,
-            num_generations=num_generations,
-        )
+    for size in config.population_sizes:
+        alg.clear_metrics()
+        if alg.population_size != size:
+            alg.population_size = size
+            alg.reinitialize_population()
+
         execution_time = alg.evolve()
 
-        results[size] = {
-            "execution_time": execution_time,
-            "diversity": alg.diversity,
-            "best_fitness": alg.best_fitness,
-            "average_fitness": alg.average_fitness,
-            "worst_fitness": alg.worst_fitness,
-        }
+        key = size
+        results[key] = ExperimentResults(
+            metadata={
+                "population_size": alg.population_size,
+                "mutation_rate": alg.mutation_rate,
+                "selector": type(alg.selector).__name__,
+                "operator": type(alg.crossover_operator).__name__,
+                "evaluator": type(alg.evaluator).__name__,
+                "generations": alg.generations,
+            },
+            execution_time=execution_time,
+            diversity=alg.diversity,
+            best_fitness=alg.best_fitness,
+            average_fitness=alg.average_fitness,
+            worst_fitness=alg.worst_fitness,
+        )
     return results
 
 

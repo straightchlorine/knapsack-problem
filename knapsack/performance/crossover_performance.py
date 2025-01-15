@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
-import pandas as pd
 import numpy as np
+import pandas as pd
 import seaborn as sns
-from typing import Sequence
+
+from knapsack.analyze.utility import ExperimentConfig, init_alg
 from knapsack.dataset import Dataset
 from knapsack.evaluators.evaluator import Evaluator
 from knapsack.genetic_algorithm import GeneticAlgorithm
@@ -12,48 +13,18 @@ from knapsack.selectors.selector import Selector
 
 
 def crossover_efectiveness(
-    problems: list[Dataset],
-    algorithm: type[GeneticAlgorithm],
-    evaluator: Evaluator,
-    selector: Selector,
-    crossover_operators: Sequence[Crossover],
-    mutation_operator: Mutation,
-    population_size: int,
-    strategy: str = "value_biased",
+    alg: type[GeneticAlgorithm],
+    config: ExperimentConfig,
 ):
-    results = _measure_crossover_effectiveness(
-        problems,
-        algorithm,
-        evaluator,
-        selector,
-        crossover_operators,
-        mutation_operator,
-        population_size,
-        strategy,
-    )
+    algorithm = init_alg(alg, config)
+    results = _measure_crossover_effectiveness(algorithm, config)
     plot_crossover_effectiveness(results)
 
 
 def _measure_crossover_effectiveness(
-    problems: list[Dataset],
-    algorithm: type[GeneticAlgorithm],
-    evaluator: Evaluator,
-    selector: Selector,
-    crossover_operators: Sequence[Crossover],
-    mutation_operator: Mutation,
-    population_size: int,
-    strategy: str = "value_biased",
+    alg: GeneticAlgorithm,
+    config: ExperimentConfig,
 ):
-    alg = algorithm(
-        problems[0],
-        evaluator,
-        selector,
-        crossover_operators[0],
-        mutation_operator,
-        population_size,
-    )
-    alg.dev = False
-
     columns = [
         "crossover_operator",
         "problem_id",
@@ -68,12 +39,14 @@ def _measure_crossover_effectiveness(
 
     # iterate through operators, set them
     # iterate through problems, set them
-    for operator in crossover_operators:
+    for operator in config.crossover_operators:
         alg.crossover_operator = operator
 
-        for pid, problem in enumerate(problems):
-            alg.set_problem(problem, strategy)
+        for pid, problem in enumerate(config.problems):
             alg.clear_metrics()
+            if alg.dataset != problem:
+                alg.dataset = problem
+                alg.reinitialize_population()
             execution_time = alg.evolve()
 
             # calculate metrics

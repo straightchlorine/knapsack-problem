@@ -1,43 +1,56 @@
 import matplotlib.pyplot as plt
 
+from knapsack.analyze.utility import ExperimentConfig, ExperimentResults, init_alg
 from knapsack.genetic_algorithm import GeneticAlgorithm
 from knapsack.selectors.tournament_selector import TournamentSelector
 
 
 def tournament_selector_params_impact_analysis(
-    alg: GeneticAlgorithm,
+    alg: type[GeneticAlgorithm],
+    config: ExperimentConfig,
     tournament_selector: TournamentSelector,
-    generations: list[int],
     tournament_sizes: list[int],
 ):
-    results = _measure_metrics(alg, tournament_selector, generations, tournament_sizes)
+    # create basic instance
+    config.selectors = [tournament_selector]
+    algorithm = init_alg(alg, config)
+    results = _measure_metrics(algorithm, config, tournament_sizes)
     plot_tournament_selector_impact(results)
     return results
 
 
 def _measure_metrics(
     alg: GeneticAlgorithm,
-    tournament_selector: TournamentSelector,
-    generations: list[int],
+    config: ExperimentConfig,
     tournament_sizes: list[int],
 ):
     results = {}
-    for generation in generations:
-        for tournament_size in tournament_sizes:
-            alg.selector = tournament_selector
-            alg.selector.tournament_size = tournament_size
-            alg.num_generations = generation
+    for gen in config.generations:
+        for t_size in tournament_sizes:
+            # clear the algorithm and set parameters
             alg.clear_metrics()
-            execution_time = alg.evolve()
+            alg.generations = gen
+            alg.selector.tournament_size = t_size
 
-            key = f"Generations_{generations}_TournamentSize_{tournament_size}"
-            results[key] = {
-                "execution_time": execution_time,
-                "diversity": alg.diversity,
-                "best_fitness": alg.best_fitness,
-                "average_fitness": alg.average_fitness,
-                "worst_fitness": alg.worst_fitness,
-            }
+            execution_time = alg.evolve()
+            alg.reinitialize_population()
+
+            key = f"gens_{gen}_tsize_{t_size}"
+            results[key] = ExperimentResults(
+                metadata={
+                    "population_size": alg.population_size,
+                    "mutation_rate": alg.mutation_rate,
+                    "selector": type(alg.selector).__name__,
+                    "operator": type(alg.crossover_operator).__name__,
+                    "evaluator": type(alg.evaluator).__name__,
+                    "generations": alg.generations,
+                },
+                execution_time=execution_time,
+                diversity=alg.diversity,
+                best_fitness=alg.best_fitness,
+                average_fitness=alg.average_fitness,
+                worst_fitness=alg.worst_fitness,
+            )
 
     return results
 

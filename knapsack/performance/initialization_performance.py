@@ -1,44 +1,49 @@
 import matplotlib.pyplot as plt
 
+from knapsack.analyze.utility import ExperimentConfig, ExperimentResults, init_alg
 from knapsack.genetic_algorithm import GeneticAlgorithm
 
 
 def initialization_effectiveness(
-    algorithm: GeneticAlgorithm, strategies: list[str], iterations=10
+    alg: type[GeneticAlgorithm], config: ExperimentConfig, iterations=10
 ):
-    """Test how different population initialization strategies affect solution quality.
-
-    Args:
-        algorithm: Genetic algorithm instance.
-        strategies (list): List of initialization strategy names to test.
-        iterations (int): Number of test iterations for each strategy.
-
-    Returns:
-        dict: Dictionary containing fitness results for each strategy.
-    """
-    results = _initialization_performance_analysis(algorithm, strategies, iterations)
+    algorithm = init_alg(alg, config)
+    results = _initialization_performance_analysis(algorithm, config, iterations)
     plot_initialization_performance(results)
     return results
 
 
 def _initialization_performance_analysis(
-    algorithm: GeneticAlgorithm, strategies: list[str], iterations=10
+    alg: GeneticAlgorithm, config: ExperimentConfig, iterations=10
 ):
     """Test different initialization strategies and collect data about solution quality."""
     results = {}
-    for strategy in strategies:
-        algorithm.clear_metrics()
+    for strategy in config.strategies:
+        alg.clear_metrics()
         for _ in range(iterations):
-            algorithm.population.initialize_with_strategy(strategy)
-            execution_time = algorithm.evolve()
+            if alg.strategy != strategy:
+                alg.strategy = strategy
+                alg.reinitialize_population()
 
-            results[strategy] = {
-                "execution_time": execution_time,
-                "diversity": algorithm.diversity,
-                "best_fitness": algorithm.best_fitness,
-                "average_fitness": algorithm.average_fitness,
-                "worst_fitness": algorithm.worst_fitness,
-            }
+            execution_time = alg.evolve()
+
+            key = strategy
+            results[key] = ExperimentResults(
+                metadata={
+                    "population_size": alg.population_size,
+                    "mutation_rate": alg.mutation_rate,
+                    "selector": type(alg.selector).__name__,
+                    "operator": type(alg.crossover_operator).__name__,
+                    "evaluator": type(alg.evaluator).__name__,
+                    "generations": alg.generations,
+                },
+                execution_time=execution_time,
+                diversity=alg.diversity,
+                best_fitness=alg.best_fitness,
+                average_fitness=alg.average_fitness,
+                worst_fitness=alg.worst_fitness,
+            )
+
     return results
 
 

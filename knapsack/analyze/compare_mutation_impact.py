@@ -1,8 +1,9 @@
-from typing import Sequence
-import pandas as pd
-import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+
+from knapsack.analyze.utility import ExperimentConfig, init_alg
 from knapsack.dataset import Dataset
 from knapsack.evaluators.evaluator import Evaluator
 from knapsack.genetic_algorithm import GeneticAlgorithm
@@ -12,49 +13,18 @@ from knapsack.selectors.selector import Selector
 
 
 def compare_mutation_impact(
-    problems: list[Dataset],
-    algorithm: type[GeneticAlgorithm],
-    evaluator: Evaluator,
-    selector: Selector,
-    crossover_operator: Crossover,
-    mutation_operators: Sequence[Mutation],
-    population_size: int,
-    strategy: str = "value_biased",
+    alg: type[GeneticAlgorithm],
+    config: ExperimentConfig,
 ):
-    result = _measure_comparison_metrics(
-        problems,
-        algorithm,
-        evaluator,
-        selector,
-        crossover_operator,
-        mutation_operators,
-        population_size,
-        strategy,
-    )
-    plot_mutation_comparison(result)
+    algorithm = init_alg(alg, config)
+    results = _measure_comparison_metrics(algorithm, config)
+    plot_mutation_comparison(results)
 
 
 def _measure_comparison_metrics(
-    problems: list[Dataset],
-    algorithm: type[GeneticAlgorithm],
-    evaluator: Evaluator,
-    selector: Selector,
-    crossover_operator: Crossover,
-    mutation_operators: Sequence[Mutation],
-    population_size: int,
-    strategy,
+    alg: GeneticAlgorithm,
+    config: ExperimentConfig,
 ):
-    alg = algorithm(
-        problems[0],
-        evaluator,
-        selector,
-        crossover_operator,
-        mutation_operators[0],
-        population_size,
-        strategy=strategy,
-    )
-    alg.dev = False
-
     columns = [
         "mutation_operator",
         "problem_id",
@@ -67,10 +37,14 @@ def _measure_comparison_metrics(
     ]
     df = pd.DataFrame(columns=pd.Index(columns))
 
-    for operator in mutation_operators:
+    for operator in config.mutation_operators:
         alg.mutation_operator = operator
-        for pid, problem in enumerate(problems):
-            alg.set_problem(problem, strategy)
+        for pid, problem in enumerate(config.problems):
+            alg.clear_metrics()
+            if alg.dataset != problem:
+                alg.dataset = problem
+                alg.reinitialize_population()
+
             execution_time = alg.evolve()
 
             # calculate metrics

@@ -1,36 +1,44 @@
 import matplotlib.pyplot as plt
 
+from knapsack.analyze.utility import ExperimentConfig, ExperimentResults, init_alg
 from knapsack.genetic_algorithm import GeneticAlgorithm
-from knapsack.operators.crossover import Crossover
 
 
 def crossover_operator_impact_analysis(
-    alg: GeneticAlgorithm, crossover_operators: list[Crossover]
+    alg: type[GeneticAlgorithm],
+    config: ExperimentConfig,
 ):
-    """Analyse the impact of different crossover operators on the metrics.
-
-    Args:
-        alg (GeneticAlgorithm): Genetic algorithm instance.
-        crossover_operators (list): List of crossover operators to test.
-    """
-    results = _measure_metrics(alg, crossover_operators)
+    algorithm = init_alg(alg, config)
+    results = _measure_metrics(algorithm, config)
     plot_crossover_impact_metrics(results)
 
 
-def _measure_metrics(alg: GeneticAlgorithm, crossover_operators: list[Crossover]):
+def _measure_metrics(alg: GeneticAlgorithm, config: ExperimentConfig):
     results = {}
-    for crossover_operator in crossover_operators:
-        alg.crossover_operator = crossover_operator
+    for operator in config.crossover_operators:
         alg.clear_metrics()
+        alg.crossover_operator = operator
+
         execution_time = alg.evolve()
 
-        results[type(crossover_operator).__name__] = {
-            "execution_time": execution_time,
-            "diversity": alg.diversity,
-            "best_fitness": alg.best_fitness,
-            "average_fitness": alg.average_fitness,
-            "worst_fitness": alg.worst_fitness,
-        }
+        alg.reinitialize_population()
+
+        key = type(operator).__name__
+        results[key] = ExperimentResults(
+            metadata={
+                "population_size": alg.population_size,
+                "mutation_rate": alg.mutation_rate,
+                "selector": type(alg.selector).__name__,
+                "operator": type(alg.crossover_operator).__name__,
+                "evaluator": type(alg.evaluator).__name__,
+                "generations": alg.generations,
+            },
+            execution_time=execution_time,
+            diversity=alg.diversity,
+            best_fitness=alg.best_fitness,
+            average_fitness=alg.average_fitness,
+            worst_fitness=alg.worst_fitness,
+        )
 
     return results
 

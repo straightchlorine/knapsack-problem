@@ -1,28 +1,47 @@
 import matplotlib.pyplot as plt
 
+from knapsack.analyze.utility import (
+    ExperimentConfig,
+    ExperimentResults,
+    init_alg,
+    is_class_equal,
+)
 from knapsack.genetic_algorithm import GeneticAlgorithm
-from knapsack.selectors.selector import Selector
 
 
-def selector_impact_analysis(alg: GeneticAlgorithm, selectors: list[Selector]):
-    results = _measure_metrics(alg, selectors)
+def selector_impact_analysis(alg: type[GeneticAlgorithm], config: ExperimentConfig):
+    algorithm = init_alg(alg, config)
+    results = _measure_metrics(algorithm, config)
     plot_selector_impact_metrics(results)
 
 
-def _measure_metrics(alg: GeneticAlgorithm, selectors: list[Selector]):
+def _measure_metrics(alg: GeneticAlgorithm, config: ExperimentConfig):
     results = {}
-    for selector in selectors:
-        alg.selector = selector
+    for selector in config.selectors:
         alg.clear_metrics()
-        execution_time = alg.evolve()
 
-        results[type(selector).__name__] = {
-            "execution_time": execution_time,
-            "diversity": alg.diversity,
-            "best_fitness": alg.best_fitness,
-            "average_fitness": alg.average_fitness,
-            "worst_fitness": alg.worst_fitness,
-        }
+        if not is_class_equal(alg.selector, selector):
+            alg.selector = selector
+
+        execution_time = alg.evolve()
+        alg.reinitialize_population()
+
+        key = type(selector).__name__
+        results[key] = ExperimentResults(
+            metadata={
+                "population_size": alg.population_size,
+                "mutation_rate": alg.mutation_rate,
+                "selector": type(selector).__name__,
+                "operator": type(alg.crossover_operator).__name__,
+                "evaluator": type(alg.evaluator).__name__,
+                "generations": alg.generations,
+            },
+            execution_time=execution_time,
+            diversity=alg.diversity,
+            best_fitness=alg.best_fitness,
+            average_fitness=alg.average_fitness,
+            worst_fitness=alg.worst_fitness,
+        )
 
     return results
 

@@ -1,118 +1,110 @@
 from itertools import product
-from typing import Optional, Sequence
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import pandas as pd
 from pandas.core.api import DataFrame
 import seaborn as sns
 
-from knapsack.dataset import Dataset
+from knapsack.analyze.utility import ExperimentConfig, ExperimentResults, init_alg
 from knapsack.evaluators.evaluator import Evaluator
 from knapsack.genetic_algorithm import GeneticAlgorithm
-from knapsack.mutations.mutation import Mutation
 from knapsack.operators.crossover import Crossover
 from knapsack.selectors.selector import Selector
 
 
 def combined_params_impact(
     alg: type[GeneticAlgorithm],
-    problem: Dataset,
-    population_sizes: list[int],
-    mutation_rates: list[float],
-    mutation_operators: Sequence[Mutation],
-    selectors: Sequence[Selector],
-    generations: list[int],
-    operators: Sequence[Crossover],
-    evaluators: Sequence[Evaluator],
+    config: ExperimentConfig,
 ):
-    results = _measure_metrics(
-        alg,
-        problem,
-        population_sizes,
-        mutation_rates,
-        mutation_operators,
-        selectors,
-        generations,
-        operators,
-        evaluators,
-    )
+    algorithm = init_alg(alg, config)
+    results = _measure_metrics(algorithm, config)
     plot_combined_metric_analysis(results, filter_selector="TournamentSelector")
     return results
 
 
+def _generate_config_key(
+    population_size: int,
+    mutation_rate: float,
+    generations: int,
+    selector: Selector,
+    operator: Crossover,
+    evaluator: Evaluator,
+) -> str:
+    """Generate a unique key for a parameter configuration."""
+    prefix = f"{population_size}_{mutation_rate}_{generations}-"
+    selector_name = type(selector).__name__[:3]
+    operator_name = type(operator).__name__[:3]
+    evaluator_name = type(evaluator).__name__[:3]
+    return f"{prefix}sel={selector_name}_op={operator_name}_eval={evaluator_name}"
+
+
 def _measure_metrics(
-    alg_class: type[GeneticAlgorithm],
-    problem: Dataset,
-    population_sizes: list[int],
-    mutation_rates: list[float],
-    mutation_operators: Sequence[Mutation],
-    selectors: Sequence[Selector],
-    generations: list[int],
-    operators: Sequence[Crossover],
-    evaluators: Sequence[Evaluator],
+    alg: GeneticAlgorithm,
+    config: ExperimentConfig,
 ):
     results = {}
 
     # iterate over all combinations of parameters
-    for (
-        population_size,
-        mutation_rate,
-        selector,
-        gens,
-        crossover_operator,
-        evaluator,
-        mutation_operator,
-    ) in product(
-        population_sizes,
-        mutation_rates,
-        selectors,
-        generations,
-        operators,
-        evaluators,
-        mutation_operators,
+    for params in product(
+        config.evaluators,
+        config.selectors,
+        config.crossover_operators,
+        config.mutation_operators,
+        config.mutation_rates,
+        config.population_sizes,
+        config.generations,
+        config.strategies,
     ):
-        # set appropriate evaluator to the selector
-        if hasattr(type(selector), "evaluator"):
-            selector.evaluator = evaluator
-
-        # set an appropriate probability to the mutation operator
-        mutation_operator.probability = mutation_rate
-
-        alg = alg_class(
-            problem,
+        (
             evaluator,
             selector,
             crossover_operator,
             mutation_operator,
-            population_size=population_size,
-            num_generations=gens,
-        )
+            mutation_rate,
+            population_size,
+            gens,
+            strategy,
+        ) = params
 
+        # set all the parameters for the run and reinitialize population
+        alg.evaluator = evaluator
+        alg.selector = selector
+        alg.crossover_operator = crossover_operator
+        alg.mutation_operator = mutation_operator
+        alg.mutation_rate = mutation_rate
+        alg.population_size = population_size
+        alg.generations = gens
+        alg.strategy = strategy
+        alg.reinitialize_population()
+
+        # execute the algorithm
         execution_time = alg.evolve()
 
-        prefix = f"{population_size}_{mutation_rate}_{gens}-"
-        selector_name = type(selector).__name__[:3]
-        operator_name = type(crossover_operator).__name__[:3]
-        evaluator_name = type(evaluator).__name__[:3]
-        key = f"{prefix}sel={selector_name}_op={operator_name}_eval={evaluator_name}"
+        key = _generate_config_key(
+            population_size,
+            mutation_rate,
+            gens,
+            selector,
+            crossover_operator,
+            evaluator,
+        )
 
-        metadata = {
-            "population_size": population_size,
-            "mutation_rate": mutation_rate,
-            "selector": type(selector).__name__,
-            "operator": type(crossover_operator).__name__,
-            "evaluator": type(evaluator).__name__,
-            "generations": gens,
-        }
-
-        results[key] = {
-            "metadata": metadata,
-            "execution_time": execution_time,
-            "diversity": alg.diversity,
-            "best_fitness": alg.best_fitness,
-            "average_fitness": alg.average_fitness,
-            "worst_fitness": alg.worst_fitness,
-        }
+        results[key] = ExperimentResults(
+            metadata={
+                "population_size": population_size,
+                "mutation_rate": mutation_rate,
+                "selector": type(selector).__name__,
+                "operator": type(crossover_operator).__name__,
+                "evaluator": type(evaluator).__name__,
+                "generations": gens,
+            },
+            execution_time=execution_time,
+            diversity=alg.diversity,
+            best_fitness=alg.best_fitness,
+            average_fitness=alg.average_fitness,
+            worst_fitness=alg.worst_fitness,
+        )
 
     return results
 

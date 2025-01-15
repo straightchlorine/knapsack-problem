@@ -8,6 +8,7 @@ class Selector:
 
     _population: np.ndarray
     evaluator: Evaluator
+    tournament_size: int
 
     def __init__(self):
         pass

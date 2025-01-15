@@ -37,37 +37,137 @@ class GeneticAlgorithm:
         self.dataset = dataset
         self.gene_length = self.dataset.length
 
-        self.population_size = population_size
-        self.num_generations = num_generations
-        self.mutation_rate = mutation_rate
+        self._population_size = population_size
+        self._max_generations = num_generations
+        self._mutation_rate = mutation_rate
 
-        self.evaluator = evaluator
+        self._evaluator = evaluator
         print(evaluator)
 
-        self.mutation_operator = mutation_operator
-        if not self.mutation_operator.probability:
-            self.mutation_operator.probability = mutation_rate
+        self._mutation_operator = mutation_operator
+        if not self._mutation_operator.probability:
+            self._mutation_operator.probability = mutation_rate
         print(mutation_operator)
 
-        self.selector = selector
+        self._selector = selector
         print(selector)
 
-        self.crossover_operator = crossover_operator
+        self._crossover_operator = crossover_operator
         print(crossover_operator)
 
         # create and initialize the first population
+        self._strategy = strategy
         self.population = Population(
             self.dataset, self.selector, self.population_size, self.gene_length
         )
-        self.population.initialize_with_strategy(strategy)
+        self.population.initialize_with_strategy(self.strategy)
 
-    def set_problem(self, dataset: Dataset, strategy):
-        self.dataset = dataset
+    # -------------------------------------------------
+
+    @property
+    def generations(self):
+        return self._max_generations
+
+    @generations.setter
+    def generations(self, generations):
+        self._max_generations = generations
+
+    # -------------------------------------------------
+    @property
+    def evaluator(self):
+        return self._evaluator
+
+    @evaluator.setter
+    def evaluator(self, evaluator):
+        print(evaluator)
+        self._evaluator = evaluator
+        self.selector.evaluator = evaluator
+
+    # -------------------------------------------------
+
+    @property
+    def selector(self):
+        return self._selector
+
+    @selector.setter
+    def selector(self, selector):
+        print(selector)
+        self._selector = selector
+        self._selector.evaluator = self.evaluator
+
+    # -------------------------------------------------
+
+    @property
+    def mutation_operator(self):
+        return self._mutation_operator
+
+    @mutation_operator.setter
+    def mutation_operator(self, mutation_operator):
+        print(mutation_operator)
+        self._mutation_operator = mutation_operator
+
+        if not self._mutation_operator.probability:
+            self._mutation_operator.probability = self.mutation_rate
+
+    # -------------------------------------------------
+
+    @property
+    def mutation_rate(self):
+        return self._mutation_rate
+
+    @mutation_rate.setter
+    def mutation_rate(self, mutation_rate):
+        self._mutation_rate = mutation_rate
+        self.mutation_operator.probability = mutation_rate
+
+    # -------------------------------------------------
+    @property
+    def crossover_operator(self):
+        return self._crossover_operator
+
+    @crossover_operator.setter
+    def crossover_operator(self, crossover_operator):
+        print(crossover_operator)
+        self._crossover_operator = crossover_operator
+
+    # -------------------------------------------------
+
+    @property
+    def population_size(self):
+        return self._population_size
+
+    @population_size.setter
+    def population_size(self, population_size):
+        self._population_size = population_size
+
+    # -------------------------------------------------
+
+    @property
+    def strategy(self):
+        return self._strategy
+
+    @strategy.setter
+    def strategy(self, strategy):
+        self._strategy = strategy
+
+    # -------------------------------------------------
+
+    @property
+    def dataset(self):
+        return self._dataset
+
+    @dataset.setter
+    def dataset(self, dataset):
+        self._dataset = dataset
         self.gene_length = self.dataset.length
+
+    # -------------------------------------------------
+
+    def reinitialize_population(self):
         self.population = Population(
             self.dataset, self.selector, self.population_size, self.gene_length
         )
-        self.population.initialize_with_strategy(strategy)
+        self.population.initialize_with_strategy(self.strategy)
 
     def new_generation(self, current_generation):
         # new generation
@@ -102,7 +202,7 @@ class GeneticAlgorithm:
         self.diversity = []
 
         with Timer() as timer:
-            for generation in range(self.num_generations):
+            for generation in range(self.generations):
                 best_solution = self.get_best_solution()
                 best_fitness = self.get_solution_fitness(best_solution)
                 avg_fitness = np.mean(
@@ -145,38 +245,12 @@ class GeneticAlgorithm:
             print(f"Evolution took {timer.interval:.4f} miliseconds.")
         return timer.interval
 
-    def clear_metrics(self, init_strategy="value_biased"):
+    def clear_metrics(self):
         self.best_fitness = []
         self.average_fitness = []
         self.worst_fitness = []
         self.diversity = []
         self.optimal_generation = None
-
-        # reset the population
-        self.population.initialize_with_strategy(init_strategy)
-
-    def prompt(self, evaluated):
-        """Prompt the evaluated chromosome.
-
-        Args:
-            evaluated (np.ndarray): Evaluated chromosome.
-        """
-        total_weight = np.sum(evaluated * self.dataset.weights)
-        total_value = np.sum(evaluated * self.dataset.values)
-        evaluation = self.evaluator.evaluate(evaluated)
-
-        capacity = float(self.dataset.capacity)
-
-        total_prompt = "\n".join(
-            [
-                "=" * 30,
-                f"genes={evaluated}",
-                "=" * 30,
-                f"total weight: {total_weight} | capacity: {capacity}",
-                f"total value: {total_value} | evaluation: {evaluation}",
-            ]
-        )
-        print(total_prompt)
 
     def get_solution_fitness(self, solution):
         """Get the fitness of the solution.
@@ -201,6 +275,29 @@ class GeneticAlgorithm:
             "average_fitness": avg_fitness,
             "worst_fitness": worst_fitness,
         }
+
+    def prompt(self, evaluated):
+        """Prompt the evaluated chromosome.
+
+        Args:
+            evaluated (np.ndarray): Evaluated chromosome.
+        """
+        total_weight = np.sum(evaluated * self.dataset.weights)
+        total_value = np.sum(evaluated * self.dataset.values)
+        evaluation = self.evaluator.evaluate(evaluated)
+
+        capacity = float(self.dataset.capacity)
+
+        total_prompt = "\n".join(
+            [
+                "=" * 30,
+                f"genes={evaluated}",
+                "=" * 30,
+                f"total weight: {total_weight} | capacity: {capacity}",
+                f"total value: {total_value} | evaluation: {evaluation}",
+            ]
+        )
+        print(total_prompt)
 
     def get_best_solution(self, n=1):
         """Get the best solutions from the population.
