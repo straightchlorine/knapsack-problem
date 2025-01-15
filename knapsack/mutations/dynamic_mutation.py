@@ -9,7 +9,7 @@ class DynamicMutation(Mutation):
         super().__init__(probability)
         self.max_generations = max_generations
 
-    def mutate(self, population, generation):
+    def mutate(self, population, generation=0):
         """
         Flip bits in chromosomes with a probability that changes dynamically.
 

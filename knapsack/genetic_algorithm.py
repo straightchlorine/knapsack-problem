@@ -2,6 +2,7 @@ import time
 
 import numpy as np
 
+from knapsack.dataset import Dataset
 from knapsack.evaluators.evaluator import Evaluator
 from knapsack.mutations.mutation import Mutation
 from knapsack.operators.crossover import Crossover
@@ -27,8 +28,8 @@ class GeneticAlgorithm:
         selector: Selector,
         crossover_operator: Crossover,
         mutation_operator: Mutation,
-        population_size=100,
-        num_generations=500,
+        population_size=20,
+        num_generations=10,
         mutation_rate=0.01,
         strategy="value_biased",
     ):
@@ -55,6 +56,14 @@ class GeneticAlgorithm:
         print(crossover_operator)
 
         # create and initialize the first population
+        self.population = Population(
+            self.dataset, self.selector, self.population_size, self.gene_length
+        )
+        self.population.initialize_with_strategy(strategy)
+
+    def set_problem(self, dataset: Dataset, strategy):
+        self.dataset = dataset
+        self.gene_length = self.dataset.length
         self.population = Population(
             self.dataset, self.selector, self.population_size, self.gene_length
         )
@@ -111,6 +120,12 @@ class GeneticAlgorithm:
 
                 diversity = self.population.measure_diversity()
 
+                if not self.best_fitness:
+                    self.optimal_generation = generation
+                else:
+                    if best_fitness > self.best_fitness[-1]:
+                        self.optimal_generation = generation
+
                 self.best_fitness.append(best_fitness)
                 self.average_fitness.append(avg_fitness)
                 self.worst_fitness.append(worst_fitness)
@@ -135,6 +150,7 @@ class GeneticAlgorithm:
         self.average_fitness = []
         self.worst_fitness = []
         self.diversity = []
+        self.optimal_generation = None
 
     def prompt(self, evaluated):
         """Prompt the evaluated chromosome.
