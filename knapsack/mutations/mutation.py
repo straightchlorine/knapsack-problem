@@ -6,16 +6,6 @@ class Mutation:
 
     _probability: float  # Probability of mutation for each gene
 
-    def __init__(self, probability: float):
-        """Initialize the mutation operator.
-
-        Args:
-            probability (float): Probability of mutation for each gene.
-        """
-        if not (0 <= probability <= 1):
-            raise ValueError("Mutation probability must be between 0 and 1.")
-        self._probability = probability
-
     def __str__(self):
         return f"Mutation: {self.__class__.__name__}"
 

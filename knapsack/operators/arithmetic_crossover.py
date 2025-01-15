@@ -4,15 +4,15 @@ from knapsack.operators.crossover import Crossover
 
 class ArithmeticCrossover(Crossover):
     def __init__(self, alpha=0.5, dev=False):
-        """
-        Args:
-            alpha (float): Weight for averaging, should be between 0 and 1.
-            dev (bool, optional): Debug mode. Defaults to False.
-        """
+        if not (0 <= alpha <= 1):
+            raise ValueError("Alpha must be between 0 and 1.")
         super().__init__(dev)
         self.alpha = alpha
 
     def crossover(self, parent_a, parent_b):
+        if parent_a.size != parent_b.size:
+            raise ValueError("Parents must have the same size.")
+
         child_1 = self.alpha * parent_a + (1 - self.alpha) * parent_b
         child_2 = (1 - self.alpha) * parent_a + self.alpha * parent_b
 

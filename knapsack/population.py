@@ -168,7 +168,7 @@ class Population:
 
         return chromosome.astype(int)
 
-    def initialize_with_strategy(self, strategy="value_biased"):
+    def initialize_population(self, strategy="value_biased"):
         """Initialize the population based on a chosen strategy."""
         strategies = {
             "value_biased": self.__gen_genes_value_biased,

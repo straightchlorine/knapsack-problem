@@ -32,41 +32,27 @@ Test cases:
 
 class FixedPointCrossover(Crossover):
     def __init__(self, dev=False, fixed_point=None):
-        """Initialize the FixedPointCrossover operator.
-
-        Args:
-            dev (bool, optional): Whether to display debug information.
-                Defaults to False.
-            fixed_point (int, optional): Fixed crossover point. If None, a
-            random point between 1 and parent_a.size - 1 will be chosen.
-        """
         super().__init__(dev)
         self.fixed_point = fixed_point
 
     def crossover(self, parent_a, parent_b):
-        # validate the fixed point parameter
+        if parent_a.size != parent_b.size:
+            raise ValueError("Parents must have the same size.")
+
         if self.fixed_point is not None:
             if not (1 <= self.fixed_point < parent_a.size):
-                raise ValueError(
-                    "fixed_point must be between 1 and parent_a.size - 1"
-                )
+                raise ValueError("Fixed_point must be between 1 and parent_a.size - 1.")
             point = self.fixed_point
         else:
-            point = np.random.randint(1, parent_a.size - 1)
+            point = np.random.randint(1, parent_a.size)
 
-        # create two children
-        genes = (
-            np.concatenate([parent_a[:point], parent_b[point:]]),
-            np.concatenate([parent_a[point:], parent_b[:point]]),
-        )
+        child_1 = np.concatenate([parent_a[:point], parent_b[point:]])
+        child_2 = np.concatenate([parent_b[:point], parent_a[point:]])
 
-        # debug for presentation
         if self.dev:
             print(f"FixedPointCrossover:\nUsing crossover point {point}")
             print(f"Crossover on {parent_a} and {parent_b}")
-            print(f"Generated children: {genes[0]} and {genes[1]}")
-            print(f"Child 0 parts: {parent_a[:point]} and {parent_b[point:]}")
-            print(f"Child 1 parts: {parent_a[point:]} and {parent_b[:point]}")
-            print(20 * "=")
+            print(f"Generated children: {child_1} and {child_2}")
+            print("=" * 20)
 
-        return np.array([genes[0], genes[1]])
+        return np.array([child_1, child_2])

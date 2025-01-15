@@ -4,15 +4,15 @@ from knapsack.operators.crossover import Crossover
 
 class BlendCrossover(Crossover):
     def __init__(self, alpha=0.5, dev=False):
-        """
-        Args:
-            alpha (float): Blend factor. Determines the range of exploration.
-            dev (bool, optional): Debug mode. Defaults to False.
-        """
+        if alpha < 0:
+            raise ValueError("Alpha must be non-negative.")
         super().__init__(dev)
         self.alpha = alpha
 
     def crossover(self, parent_a, parent_b):
+        if parent_a.size != parent_b.size:
+            raise ValueError("Parents must have the same size.")
+
         diff = np.abs(parent_a - parent_b)
         lower_bound = np.minimum(parent_a, parent_b) - self.alpha * diff
         upper_bound = np.maximum(parent_a, parent_b) + self.alpha * diff

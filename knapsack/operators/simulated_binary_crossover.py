@@ -4,15 +4,13 @@ import numpy as np
 
 class SimulatedBinaryCrossover(Crossover):
     def __init__(self, eta=2, dev=False):
-        """
-        Args:
-            eta (float): Spread factor. Higher values focus offspring near parents.
-            dev (bool, optional): Debug mode. Defaults to False.
-        """
         super().__init__(dev)
         self.eta = eta
 
     def crossover(self, parent_a, parent_b):
+        if parent_a.size != parent_b.size:
+            raise ValueError("Parents must have the same size.")
+
         rand = np.random.rand(parent_a.size)
         beta = np.empty_like(rand)
         beta[rand <= 0.5] = (2 * rand[rand <= 0.5]) ** (1 / (self.eta + 1))

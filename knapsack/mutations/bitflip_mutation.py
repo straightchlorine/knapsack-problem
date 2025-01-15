@@ -2,6 +2,10 @@ import numpy as np
 from knapsack.mutations.mutation import Mutation
 
 
+import numpy as np
+from knapsack.mutations.mutation import Mutation
+
+
 class BitFlipMutation(Mutation):
     """Applies bit-flip mutation to a binary population."""
 
@@ -12,8 +16,6 @@ class BitFlipMutation(Mutation):
             np.ndarray: The mutated population.
         """
         mutated_population = population.copy()
-        for i in range(mutated_population.shape[0]):
-            for j in range(mutated_population.shape[1]):
-                if np.random.rand() < self.probability:
-                    mutated_population[i, j] = 1 - mutated_population[i, j]
+        mutation_mask = np.random.rand(*mutated_population.shape) < self.probability
+        mutated_population[mutation_mask] ^= 1
         return mutated_population

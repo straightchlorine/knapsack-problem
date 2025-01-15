@@ -1,5 +1,4 @@
 import numpy as np
-import logging
 from knapsack.evaluators.evaluator import Evaluator
 
 """
@@ -232,8 +231,8 @@ class FitnessEvaluator(Evaluator):
         Returns:
             float: The fitness value of the chromosome, or 0 if weight exceeds capacity.
         """
-        total_weight = np.sum(chromosome * self.dataset.weights)
-        total_value = np.sum(chromosome * self.dataset.values)
+        total_weight = np.dot(chromosome, self.dataset.weights)
+        total_value = np.dot(chromosome, self.dataset.values)
 
         if total_weight > self.dataset.capacity:
             return 0
@@ -241,9 +240,7 @@ class FitnessEvaluator(Evaluator):
 
 
 class ScalingFitnessEvaluator(Evaluator):
-    def __init__(
-        self, dataset, normalize=False, std_threshold=3, scaling_factor=None
-    ):
+    def __init__(self, dataset, normalize=False, std_threshold=3, scaling_factor=None):
         """Scaling fitness evaluator.
 
         Punishment scales with the amount of weight exceeding the capacity.
@@ -256,66 +253,43 @@ class ScalingFitnessEvaluator(Evaluator):
         """
         super().__init__(dataset)
 
-        # calculate standard deviation ratios for both values and weights
-        weight_std_ratio = np.std(self.dataset.weights) / np.mean(
-            self.dataset.weights
-        )
-        value_std_ratio = np.std(self.dataset.values) / np.mean(
-            self.dataset.values
-        )
-        logging.debug("Computed standard deviation ratios.")
-        logging.info(f"Weight std ratio: {weight_std_ratio:.4f}")
-        logging.info(f"Value std ratio: {value_std_ratio:.4f}")
+        self.normalize = normalize
+        self.std_threshold = std_threshold
+        self.scaling_factor = scaling_factor
 
-        # depending on the threshold and the std, decide whether to normalize
-        self.normalize = (
-            normalize
-            or weight_std_ratio > std_threshold
-            or value_std_ratio > std_threshold
-        )
+        if normalize:
+            self.dataset.weights, self.dataset.values = self._normalize_data(
+                self.dataset.weights, self.dataset.values
+            )
 
-        if self.normalize:
-            self.norm_weights = self.dataset.weights / np.sum(
-                self.dataset.weights
-            )
-            self.norm_values = self.dataset.values / np.sum(
-                self.dataset.values
-            )
-            logging.info("Normalization applied for both values and weights.")
-        else:
-            self.norm_weights = self.dataset.weights
-            self.norm_values = self.dataset.values
-            logging.info("Normalization not applied.")
+    def _normalize_data(self, weights, values):
+        """Normalize weights and values based on standard deviation thresholds."""
+        weights_mean, weights_std = np.mean(weights), np.std(weights)
+        values_mean, values_std = np.mean(values), np.std(values)
 
-        # calculate scaling factor
-        if scaling_factor is None:
-            self.scaling_factor = np.mean(self.dataset.values) / np.mean(
-                self.dataset.weights
-            )
-            logging.info(
-                f"Calculated scaling factor: {self.scaling_factor:.4f}"
-            )
-        else:
-            self.scaling_factor = scaling_factor
-            logging.info(f"Scaling factor used: {self.scaling_factor:.4f}")
+        if weights_std / weights_mean > self.std_threshold:
+            weights = (weights - weights_mean) / weights_std
+
+        if values_std / values_mean > self.std_threshold:
+            values = (values - values_mean) / values_std
+
+        return weights, values
 
     def evaluate(self, chromosome):
-        """Evaluate the fitness of a chromosome.
+        """Evaluate the fitness of a chromosome with penalties for exceeding capacity.
 
         Args:
             chromosome: A binary array representing the chromosome.
 
         Returns:
-            float: The fitness value of the chromosome.
+            float: The scaled fitness value of the chromosome.
         """
-        total_weight = np.sum(chromosome * self.norm_weights)
-        total_value = np.sum(chromosome * self.norm_values)
+        total_weight = np.dot(chromosome, self.dataset.weights)
+        total_value = np.dot(chromosome, self.dataset.values)
 
         if total_weight > self.dataset.capacity:
+            penalty = self.scaling_factor or (total_value / self.dataset.capacity)
             excess_weight = total_weight - self.dataset.capacity
-            penalty = (
-                excess_weight * len(self.dataset.weights) * self.scaling_factor
-            )
-            return total_value - penalty
+            return total_value - penalty * excess_weight
 
         return total_value

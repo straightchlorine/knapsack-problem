@@ -1,79 +1,207 @@
-from knapsack.analyze.utility import ExperimentConfig, ExperimentResults, init_alg
 import matplotlib.pyplot as plt
 import numpy as np
 
+from knapsack.analyze.utility import (
+    ExperimentConfig,
+    ExperimentResults,
+    append_experiment_results,
+    init_alg,
+)
 from knapsack.genetic_algorithm import GeneticAlgorithm
-from knapsack.selectors.selector import Selector
 
 
 def selector_effectiveness(
-    alg: type[GeneticAlgorithm], config: ExperimentConfig, iterations=10
+    alg: type[GeneticAlgorithm],
+    config: ExperimentConfig,
+    iterations=10,
 ):
-    """Test how effective each selector is at procuring high fitness solutions.
+    """Test and visualise performance of various selection methods.
 
     Args:
-        algorithm: Genetic algorithm instance.
-        selectors (list): List of selector objects to test.
-        iterations (int): Number of test iterations for each selector.
-
-    Returns:
-        dict: Dictionary containing fitness results for each selector.
+        alg (type[GeneticAlgorithm]): Genetic algorithm class.
+        config (ExperimentConfig): Experiment configuration.
+        iterations (int, optional): Number of iterations. Defaults to 10.
     """
     algorithm = init_alg(alg, config)
     results = _selection_performance_analysis(algorithm, config, iterations)
+
     plot_selector_performance(results)
+    plot_diversity(results)
+    plot_execution_times(results)
+    print_statistical_summary(results)
+
     return results
 
 
 def _selection_performance_analysis(
     alg: GeneticAlgorithm, config: ExperimentConfig, iterations=10
 ):
-    """Test different selection methods and collect data about quality of the solutions."""
     results = {}
     for selector in config.selectors:
         alg.selector = selector
-        solutions = []
+
         for _ in range(iterations):
-            alg.evolve()
-            best_solution = alg.get_best_solution()
-            solutions.append(alg.get_solution_fitness(best_solution))
             alg.reinitialize_population()
-        results[selector.__class__.__name__] = solutions
+            execution_time = alg.evolve()
+
+            key = type(selector).__name__
+            append_experiment_results(results, key, alg, execution_time)
+
     return results
 
 
-def plot_selector_performance(results):
-    """Plot the comparison of selection methods."""
-    plt.figure(figsize=(10, 6))
+def plot_selector_performance(results: dict[str, ExperimentResults]):
+    """
+    Plot the comparison of selection methods for fitness metrics (best, average, worst)
+    with standard deviation bands.
+    Args:
+        results (dict): Dictionary of ExperimentResults objects containing fitness metrics.
+    """
+    # Setup for plotting
+    selector_operators = list(results.keys())
+    colors = plt.cm.get_cmap("tab10", len(selector_operators))
+    metrics = ["best_fitness", "average_fitness", "worst_fitness"]
+    titles = ["Best Fitness", "Average Fitness", "Worst Fitness"]
 
-    for method, fitness_values in results.items():
-        plt.plot(
-            range(1, len(fitness_values) + 1),
-            fitness_values,
-            label=method,
-            marker="o",
-        )
+    # Create figure and subplots
+    fig, axes = plt.subplots(3, 1, figsize=(12, 12), sharex=True)
 
-    plt.title("Comparison of Selection Methods")
-    plt.xlabel("Iteration")
-    plt.ylabel("Best Solution Fitness")
-    plt.legend()
-    plt.grid(True)
+    # Plot each metric
+    for i, (metric, title) in enumerate(zip(metrics, titles)):
+        for j, operator in enumerate(selector_operators):
+            # Get data
+            generations = range(1, results[operator].metadata["generations"] + 1)
+            mean_data = np.array(getattr(results[operator], metric))
+            std_data = np.std(
+                [getattr(results[operator], metric) for _ in range(5)], axis=0
+            )
+
+            # Plot mean line
+            axes[i].plot(
+                generations,
+                mean_data,
+                label=operator,
+                color=colors(j),
+                marker="o",
+                markersize=4,
+            )
+
+            # Add standard deviation bands
+            axes[i].fill_between(
+                generations,
+                mean_data - std_data,
+                mean_data + std_data,
+                alpha=0.2,
+                color=colors(j),
+            )
+
+            # Customize plot
+            axes[i].set_title(f"{title} Over Generations")
+            axes[i].set_ylabel(title)
+            axes[i].grid(True)
+
+            # Add legend to the first subplot only
+            if i == 0:
+                axes[i].legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+
+    # Set common x-label
+    axes[-1].set_xlabel("Generation")
+
+    # Adjust layout
+    plt.tight_layout()
     plt.show()
 
 
-def selection_performance_metrics(results):
-    """Print statistics for each selection method.
-
-    Args:
-        results (dict): Dictionary containing fitness results for each selector.
+def plot_diversity(results: dict[str, ExperimentResults]):
     """
-    print("Selection Method Analysis:")
-    print("=" * 40)
-    for method, fitness_values in results.items():
-        mean_fitness = np.mean(fitness_values)
-        std_dev = np.std(fitness_values)
-        print(
-            f"{method}: Mean Fitness = {mean_fitness:.2f}, " f"Std Dev = {std_dev:.2f}"
+    Plot the population diversity comparison for different selection methods.
+    Args:
+        results (dict): Dictionary of ExperimentResults objects containing diversity metrics.
+    """
+    plt.figure(figsize=(12, 6))
+    selector_operators = list(results.keys())
+    colors = plt.cm.get_cmap("tab10", len(selector_operators))
+
+    for i, operator in enumerate(selector_operators):
+        if results[operator].diversity:  # Check if diversity data exists
+            generations = range(1, results[operator].metadata["generations"] + 1)
+            mean_data = np.array(results[operator].diversity)
+            std_data = np.std([results[operator].diversity for _ in range(5)], axis=0)
+
+            plt.plot(
+                generations,
+                mean_data,
+                label=operator,
+                color=colors(i),
+                marker="o",
+                markersize=4,
+            )
+
+            plt.fill_between(
+                generations,
+                mean_data - std_data,
+                mean_data + std_data,
+                alpha=0.2,
+                color=colors(i),
+            )
+
+    plt.title("Population Diversity Over Generations")
+    plt.xlabel("Generation")
+    plt.ylabel("Diversity")
+    plt.grid(True)
+    plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_execution_times(results: dict[str, ExperimentResults]):
+    """
+    Plot the execution times comparison for different selection methods.
+    Args:
+        results (dict): Dictionary of ExperimentResults objects containing execution times.
+    """
+    plt.figure(figsize=(10, 6))
+    selector_operators = list(results.keys())
+
+    execution_times = [
+        results[operator].execution_time for operator in selector_operators
+    ]
+
+    bars = plt.bar(selector_operators, execution_times)
+
+    # Add value labels on top of each bar
+    for bar in bars:
+        height = bar.get_height()
+        plt.text(
+            bar.get_x() + bar.get_width() / 2.0,
+            height,
+            f"{height:.2f}ms",
+            ha="center",
+            va="bottom",
         )
-    print("=" * 40)
+
+    plt.title("Execution Time Comparison")
+    plt.xlabel("Selection Operator")
+    plt.ylabel("Execution Time (seconds)")
+    plt.xticks(rotation=45)
+    plt.grid(True, axis="y")
+    plt.tight_layout()
+    plt.show()
+
+
+# Print statistical summary
+def print_statistical_summary(results: dict[str, ExperimentResults]):
+    """
+    Print statistical summary of the results.
+    Args:
+        results (dict): Dictionary of ExperimentResults objects.
+    """
+    print("\nStatistical Summary:")
+    for operator, data in results.items():
+        print(f"\n{operator}:")
+        print(f"Execution Time: {data.execution_time:.2f} miliseconds")
+        print(f"Final Best Fitness: {data.best_fitness[-1]:.4f}")
+        print(f"Final Average Fitness: {data.average_fitness[-1]:.4f}")
+        print(f"Final Worst Fitness: {data.worst_fitness[-1]:.4f}")
+        if data.diversity:
+            print(f"Final Population Diversity: {data.diversity[-1]:.4f}")

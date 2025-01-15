@@ -54,3 +54,21 @@ def init_alg(alg: type[GeneticAlgorithm], config: ExperimentConfig):
 def is_class_equal(obj1, obj2):
     """Check if a property is equal between two objects."""
     return obj1.__class__.__name__ == obj2.__class__.__name__
+
+
+def append_experiment_results(results: dict, key, alg: GeneticAlgorithm, execution_time):
+    results[key] = ExperimentResults(
+        metadata={
+            "population_size": alg.population_size,
+            "mutation_rate": alg.mutation_rate,
+            "selector": type(alg.selector).__name__,
+            "operator": type(alg.crossover_operator).__name__,
+            "evaluator": type(alg.evaluator).__name__,
+            "generations": alg.generations,
+        },
+        execution_time=execution_time,
+        diversity=alg.diversity,
+        best_fitness=alg.best_fitness,
+        average_fitness=alg.average_fitness,
+        worst_fitness=alg.worst_fitness,
+    )

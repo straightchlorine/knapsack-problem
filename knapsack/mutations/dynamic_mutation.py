@@ -1,13 +1,15 @@
 import numpy as np
+
 from knapsack.mutations.mutation import Mutation
 
 
 class DynamicMutation(Mutation):
     """Applies dynamic mutation based on the generation number."""
 
-    def __init__(self, probability, max_generations):
-        super().__init__(probability)
+    def __init__(self, probability, max_generations, min_probability=0.01):
+        self.probability = probability
         self.max_generations = max_generations
+        self.min_probability = min_probability
 
     def mutate(self, population, generation=0):
         """
@@ -21,9 +23,10 @@ class DynamicMutation(Mutation):
             np.ndarray: The mutated population.
         """
         mutated_population = population.copy()
-        dynamic_probability = self.probability * (1 - generation / self.max_generations)
-        for i in range(mutated_population.shape[0]):
-            for j in range(mutated_population.shape[1]):
-                if np.random.rand() < dynamic_probability:
-                    mutated_population[i, j] = 1 - mutated_population[i, j]
+        dynamic_probability = max(
+            self.probability * (1 - generation / self.max_generations),
+            self.min_probability,
+        )
+        mutation_mask = np.random.rand(*mutated_population.shape) < dynamic_probability
+        mutated_population[mutation_mask] ^= 1
         return mutated_population

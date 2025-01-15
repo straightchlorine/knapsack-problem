@@ -1,15 +1,25 @@
 #!/usr/bin/env python
 from knapsack.analyze.mutation_impact import mutation_impact
+from knapsack.analyze.utility import ExperimentConfig
 from knapsack.dataset import DataInterface
-from knapsack.evaluators.fitness import ScalingFitnessEvaluator
+from knapsack.evaluators.fitness import FitnessEvaluator, ScalingFitnessEvaluator
 from knapsack.genetic_algorithm import GeneticAlgorithm
 from knapsack.mutations.bitflip_mutation import BitFlipMutation
+from knapsack.mutations.dynamic_mutation import DynamicMutation
+from knapsack.mutations.gaussian_mutation import GaussianMutation
+from knapsack.operators.arithmetic_crossover import ArithmeticCrossover
+from knapsack.operators.blend_crossover import BlendCrossover
+from knapsack.operators.fixed_point_crossover import FixedPointCrossover
 from knapsack.operators.multi_point_crossover import MultiPointCrossover
+from knapsack.operators.simulated_binary_crossover import SimulatedBinaryCrossover
+from knapsack.operators.uniform_crossover import UniformCrossover
 from knapsack.performance.selector_execution_time import selector_time_efficiency
 from knapsack.performance.selector_mutation_impact import selector_diversity_impact
 from knapsack.performance.selector_performance import selector_effectiveness
+from knapsack.selectors.adaptive_selector import AdaptiveRouletteSelector
 from knapsack.selectors.elitism_selector import ElitismSelector
 from knapsack.selectors.random_selector import RandomSelector
+from knapsack.selectors.ranking_selector import RankingSelector
 from knapsack.selectors.roulette_selector import RouletteSelector
 from knapsack.selectors.tournament_selector import TournamentSelector
 
@@ -19,37 +29,52 @@ dataset = DataInterface.from_csv("datasets/dataset.csv")
 problem = dataset.chromosome_datasets[100]
 
 # ---- basic ----
-population_size = 10
-num_generations = 5
-mutation_rate = 0.01
+population_sizes = [5, 6, 10, 50]
+generations = [2, 5, 10, 20]
+mutation_rates = [0.01, 0.05, 0.1, 0.2]
 # ---- basic ----
 
-evaluator = ScalingFitnessEvaluator(problem)
-selector = RouletteSelector(evaluator)
-crossover = MultiPointCrossover(points=[2, 3], dev=dev)
-mutation_operator = BitFlipMutation(mutation_rate)
-
-mutation_rates = [0.01, 0.05, 0.1]
+evaluators = [
+    FitnessEvaluator(problem),
+    ScalingFitnessEvaluator(problem),
+]
 selectors = [
+    AdaptiveRouletteSelector(evaluators[0]),
+    RankingSelector(evaluators[0]),
     RandomSelector(),
-    RouletteSelector(evaluator),
-    TournamentSelector(evaluator, tournament_size=3),
-    ElitismSelector(evaluator),
+    # RouletteSelector(evaluators[0]),
+    TournamentSelector(evaluators[0]),
+]
+crossovers = [
+    MultiPointCrossover(points=[2, 3], dev=dev),
+    FixedPointCrossover(fixed_point=2, dev=dev),
+    UniformCrossover(dev=dev),
+    ArithmeticCrossover(dev=dev),
+    BlendCrossover(dev=dev),
+    SimulatedBinaryCrossover(dev=dev),
+]
+mutations = [
+    BitFlipMutation(),
+    GaussianMutation(),
+    DynamicMutation(mutation_rates[0], generations),
 ]
 
-alg = GeneticAlgorithm(
-    problem,
-    evaluator,
-    selector,
-    crossover,
-    mutation_operator,
-    population_size=population_size,
-    num_generations=num_generations,
-    mutation_rate=mutation_rate,
+config = ExperimentConfig(
+    dataset.chromosome_datasets,
+    evaluators,
+    selectors,
+    crossovers,
+    mutations,
+    population_sizes,
+    generations,
+    mutation_rates,
+    ["normal"],
 )
-alg.dev = dev
 
-selector_effectiveness(alg, selectors, iterations=20)
-selector_time_efficiency(alg, selectors, iterations=20)
-mutation_impact(alg, mutation_rates, iterations=20)
-selector_diversity_impact(alg, selectors, mutation_rates, iterations=20)
+config.generations = [100]
+config.population_sizes = [25]
+selector_effectiveness(GeneticAlgorithm, config)
+
+# selector_time_efficiency(alg, selectors, iterations=20)
+# mutation_impact(alg, mutation_rates, iterations=20)
+# selector_diversity_impact(alg, selectors, mutation_rates, iterations=20)
