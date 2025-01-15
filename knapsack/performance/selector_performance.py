@@ -1,3 +1,4 @@
+from knapsack.analyze.utility import ExperimentConfig, ExperimentResults, init_alg
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -6,7 +7,7 @@ from knapsack.selectors.selector import Selector
 
 
 def selector_effectiveness(
-    algorithm: GeneticAlgorithm, selectors: list[Selector], iterations=10
+    alg: type[GeneticAlgorithm], config: ExperimentConfig, iterations=10
 ):
     """Test how effective each selector is at procuring high fitness solutions.
 
@@ -18,24 +19,25 @@ def selector_effectiveness(
     Returns:
         dict: Dictionary containing fitness results for each selector.
     """
-    results = _selection_performance_analysis(algorithm, selectors, iterations)
+    algorithm = init_alg(alg, config)
+    results = _selection_performance_analysis(algorithm, config, iterations)
     plot_selector_performance(results)
-    selection_performance_metrics(results)
     return results
 
 
 def _selection_performance_analysis(
-    algorithm: GeneticAlgorithm, selectors: list[Selector], iterations=10
+    alg: GeneticAlgorithm, config: ExperimentConfig, iterations=10
 ):
     """Test different selection methods and collect data about quality of the solutions."""
     results = {}
-    for selector in selectors:
-        algorithm.selector = selector
+    for selector in config.selectors:
+        alg.selector = selector
         solutions = []
         for _ in range(iterations):
-            algorithm.evolve()
-            best_solution = algorithm.get_best_solution()
-            solutions.append(algorithm.get_solution_fitness(best_solution))
+            alg.evolve()
+            best_solution = alg.get_best_solution()
+            solutions.append(alg.get_solution_fitness(best_solution))
+            alg.reinitialize_population()
         results[selector.__class__.__name__] = solutions
     return results
 
@@ -72,7 +74,6 @@ def selection_performance_metrics(results):
         mean_fitness = np.mean(fitness_values)
         std_dev = np.std(fitness_values)
         print(
-            f"{method}: Mean Fitness = {mean_fitness:.2f}, "
-            f"Std Dev = {std_dev:.2f}"
+            f"{method}: Mean Fitness = {mean_fitness:.2f}, " f"Std Dev = {std_dev:.2f}"
         )
     print("=" * 40)
