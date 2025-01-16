@@ -1,68 +1,19 @@
-
 import matplotlib.pyplot as plt
 import numpy as np
 
-from knapsack.analyze.utility import (
-    ExperimentConfig,
-    ExperimentResults,
-    append_experiment_results,
-    init_alg,
-    print_statistical_summary,
-)
-from knapsack.genetic_algorithm import GeneticAlgorithm
+from knapsack.analyze.utility import ExperimentResults
 
 
-def selector_effectiveness(
-    alg: type[GeneticAlgorithm],
-    config: ExperimentConfig,
-    iterations=10,
-):
-    """Test and visualise performance of various selection methods.
-
-    Args:
-        alg (type[GeneticAlgorithm]): Genetic algorithm class.
-        config (ExperimentConfig): Experiment configuration.
-        iterations (int, optional): Number of iterations. Defaults to 10.
+def plot_performance(results: dict[str, ExperimentResults]):
     """
-    algorithm = init_alg(alg, config)
-    results = _selection_performance_analysis(algorithm, config, iterations)
-
-    plot_selector_performance(results)
-    plot_diversity(results)
-    plot_execution_times(results)
-    plot_optimal_generations(results)
-    print_statistical_summary(results)
-
-    return results
-
-
-def _selection_performance_analysis(
-    alg: GeneticAlgorithm, config: ExperimentConfig, iterations=10
-):
-    results = {}
-    for selector in config.selectors:
-        alg.selector = selector
-        key = type(selector).__name__
-
-        for _ in range(iterations):
-            alg.clear_metrics()
-            alg.reinitialize_population()
-            execution_time = alg.evolve()
-            append_experiment_results(results, key, alg, execution_time)
-
-    return results
-
-
-def plot_selector_performance(results: dict[str, ExperimentResults]):
-    """
-    Plot the comparison of selection methods for fitness metrics (best, average, worst)
+    Plot the comparison of fitness metrics (best, average, worst)
     with standard deviation bands.
     Args:
         results (dict): Dictionary of ExperimentResults objects containing fitness metrics.
     """
     # Setup for plotting
-    selector_operators = list(results.keys())
-    colors = plt.cm.get_cmap("tab10", len(selector_operators))
+    keys = list(results.keys())
+    colors = plt.cm.get_cmap("tab10", len(keys))
     metrics = ["best_fitness", "average_fitness", "worst_fitness"]
     titles = ["Best Fitness", "Average Fitness", "Worst Fitness"]
 
@@ -71,7 +22,7 @@ def plot_selector_performance(results: dict[str, ExperimentResults]):
 
     # Plot each metric
     for i, (metric, title) in enumerate(zip(metrics, titles)):
-        for j, operator in enumerate(selector_operators):
+        for j, operator in enumerate(keys):
             # Get data
             generations = range(1, results[operator].metadata["generations"] + 1)
             mean_data = np.array(getattr(results[operator], f"mean_{metric}"))
@@ -122,10 +73,10 @@ def plot_diversity(results: dict[str, ExperimentResults]):
         results (dict): Dictionary of ExperimentResults objects containing diversity metrics.
     """
     plt.figure(figsize=(12, 6))
-    selector_operators = list(results.keys())
-    colors = plt.cm.get_cmap("tab10", len(selector_operators))
+    key = list(results.keys())
+    colors = plt.cm.get_cmap("tab10", len(key))
 
-    for i, operator in enumerate(selector_operators):
+    for i, operator in enumerate(key):
         if results[operator].diversity:  # Check if diversity data exists
             generations = range(1, results[operator].metadata["generations"] + 1)
             mean_data = np.array(results[operator].mean_diversity)
@@ -159,7 +110,7 @@ def plot_diversity(results: dict[str, ExperimentResults]):
     plt.show()
 
 
-def plot_execution_times(results: dict[str, ExperimentResults]):
+def plot_execution_times(results: dict[str, ExperimentResults], label):
     """
     Plot the execution times comparison for different selection methods.
 
@@ -167,13 +118,11 @@ def plot_execution_times(results: dict[str, ExperimentResults]):
         results (dict): Dictionary of ExperimentResults objects containing execution times.
     """
     plt.figure(figsize=(10, 6))
-    selector_operators = list(results.keys())
+    key = list(results.keys())
 
-    execution_times = [
-        results[operator].mean_execution_time for operator in selector_operators
-    ]
+    execution_times = [results[operator].mean_execution_time for operator in key]
 
-    bars = plt.bar(selector_operators, execution_times)
+    bars = plt.bar(key, execution_times)
 
     # Add value labels on top of each bar
     for bar in bars:
@@ -187,7 +136,7 @@ def plot_execution_times(results: dict[str, ExperimentResults]):
         )
 
     plt.title("Execution Time Comparison")
-    plt.xlabel("Selection Operator")
+    plt.xlabel(label)
     plt.ylabel("Execution Time (seconds)")
     plt.xticks(rotation=45)
     plt.grid(True, axis="y")
@@ -195,7 +144,7 @@ def plot_execution_times(results: dict[str, ExperimentResults]):
     plt.show()
 
 
-def plot_optimal_generations(results: dict[str, ExperimentResults]):
+def plot_optimal_generations(results: dict[str, ExperimentResults], label):
     """
     Plot a comparison of optimal generations (when best solution was found) for different selectors.
 
@@ -203,14 +152,12 @@ def plot_optimal_generations(results: dict[str, ExperimentResults]):
         results (dict): Dictionary of ExperimentResults objects containing optimal generation data.
     """
     plt.figure(figsize=(10, 6))
-    selector_operators = list(results.keys())
+    key = list(results.keys())
 
-    optimal_gens = [
-        results[operator].mean_optimal_generation for operator in selector_operators
-    ]
+    optimal_gens = [results[operator].mean_optimal_generation for operator in key]
 
     # Create bars with different colors
-    bars = plt.bar(selector_operators, optimal_gens)
+    bars = plt.bar(key, optimal_gens)
     colors = plt.cm.get_cmap("viridis")(np.linspace(0, 1, len(bars)))
     for bar, color in zip(bars, colors):
         bar.set_color(color)
@@ -227,7 +174,7 @@ def plot_optimal_generations(results: dict[str, ExperimentResults]):
         )
 
     plt.title("Optimal Solution Discovery Speed Comparison")
-    plt.xlabel("Selection Method")
+    plt.xlabel(label)
     plt.ylabel("Generation When Best Solution Found")
     plt.xticks(rotation=45)
     plt.grid(True, axis="y")

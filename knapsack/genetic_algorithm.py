@@ -46,7 +46,9 @@ class GeneticAlgorithm:
         self._mutation_rate = mutation_rate
 
         self._mutation_operator = mutation_operator
-        self._mutation_operator.probability = mutation_rate
+
+        if hasattr(self._mutation_operator, "probability"):
+            self._mutation_operator._probability = mutation_rate
 
         self._crossover_operator = crossover_operator
         self._strategy = strategy
@@ -117,7 +119,7 @@ class GeneticAlgorithm:
     @mutation_rate.setter
     def mutation_rate(self, value):
         self._mutation_rate = value
-        if self._mutation_operator:
+        if self._mutation_operator and hasattr(self._mutation_operator, "probability"):
             self._mutation_operator.probability = value
 
     @property

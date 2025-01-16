@@ -13,32 +13,27 @@ from knapsack.visualization.plots import (
 )
 
 
-def mutation_rate_impact(
-    alg: type[GeneticAlgorithm],
-    config: ExperimentConfig,
-    iterations=10,
+def initialization_effectiveness(
+    alg: type[GeneticAlgorithm], config: ExperimentConfig, iterations=10
 ):
     algorithm = init_alg(alg, config)
     results = _measure_metrics(algorithm, config, iterations)
 
+    label = "Initialization Strategy"
     print_statistical_summary(results)
     plot_performance(results)
     plot_diversity(results)
-    plot_execution_times(results, "Mutation rate")
-    plot_optimal_generations(results, "Mutation rate")
+    plot_execution_times(results, label)
+    plot_optimal_generations(results, label)
 
     return results
 
 
-def _measure_metrics(
-    alg: GeneticAlgorithm,
-    config: ExperimentConfig,
-    iterations=10,
-):
+def _measure_metrics(alg: GeneticAlgorithm, config: ExperimentConfig, iterations=10):
     results = {}
-    for mutation_rate in config.mutation_rates:
-        alg.mutation_rate = mutation_rate
-        key = f"Mutation rate: {mutation_rate:.2f}"
+    for strategy in config.strategies:
+        key = strategy
+        alg.strategy = strategy
 
         for _ in range(iterations):
             alg.clear_metrics()

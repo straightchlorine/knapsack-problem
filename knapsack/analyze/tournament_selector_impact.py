@@ -4,13 +4,16 @@ from knapsack.analyze.utility import (
     ExperimentConfig,
     append_experiment_results,
     init_alg,
+    print_statistical_summary,
+)
+from knapsack.genetic_algorithm import GeneticAlgorithm
+from knapsack.selectors.tournament_selector import TournamentSelector
+from knapsack.visualization.plots import (
     plot_diversity,
     plot_execution_times,
     plot_optimal_generations,
     plot_performance,
 )
-from knapsack.genetic_algorithm import GeneticAlgorithm
-from knapsack.selectors.tournament_selector import TournamentSelector
 
 
 def tournament_selector_analysis(
@@ -25,10 +28,13 @@ def tournament_selector_analysis(
 
     results = _measure_metrics(algorithm, config, tournament_sizes, iterations)
 
+    label = "Generation and TournamentSelector configuration"
+
+    print_statistical_summary(results)
     plot_performance(results)
     plot_diversity(results)
-    plot_execution_times(results, "Generation and TournamentSelector configuration")
-    plot_optimal_generations(results, "Generation and TournamentSelector configuration")
+    plot_execution_times(results, label)
+    plot_optimal_generations(results, label)
 
     return results
 

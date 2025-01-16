@@ -4,10 +4,6 @@ from knapsack.analyze.utility import (
     ExperimentConfig,
     append_experiment_results,
     init_alg,
-    plot_diversity,
-    plot_execution_times,
-    plot_optimal_generations,
-    plot_performance,
     print_statistical_summary,
 )
 from knapsack.evaluators.evaluator import Evaluator
@@ -15,6 +11,12 @@ from knapsack.genetic_algorithm import GeneticAlgorithm
 from knapsack.mutations.mutation import Mutation
 from knapsack.operators.crossover import Crossover
 from knapsack.selectors.selector import Selector
+from knapsack.visualization.plots import (
+    plot_diversity,
+    plot_execution_times,
+    plot_optimal_generations,
+    plot_performance,
+)
 
 
 def parameters_impact_analysis(
@@ -26,11 +28,11 @@ def parameters_impact_analysis(
     results = _measure_metrics(algorithm, config, iterations)
 
     label = "Configuration"
+    print_statistical_summary(results)
     plot_performance(results)
     plot_diversity(results)
     plot_execution_times(results, label)
     plot_optimal_generations(results, label)
-    print_statistical_summary(results)
 
     return results
 

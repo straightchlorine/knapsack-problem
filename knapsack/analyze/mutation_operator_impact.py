@@ -2,15 +2,18 @@ from knapsack.analyze.utility import (
     ExperimentConfig,
     append_experiment_results,
     init_alg,
+    print_statistical_summary,
+)
+from knapsack.genetic_algorithm import GeneticAlgorithm
+from knapsack.visualization.plots import (
     plot_diversity,
     plot_execution_times,
     plot_optimal_generations,
     plot_performance,
 )
-from knapsack.genetic_algorithm import GeneticAlgorithm
 
 
-def crossover_efectiveness(
+def mutation_operators_effectiveness(
     alg: type[GeneticAlgorithm],
     config: ExperimentConfig,
     iterations=10,
@@ -18,16 +21,25 @@ def crossover_efectiveness(
     algorithm = init_alg(alg, config)
     results = _measure_metrics(algorithm, config, iterations)
 
+    label = "Mutation Operator"
+
+    print_statistical_summary(results)
     plot_performance(results)
     plot_diversity(results)
-    plot_execution_times(results, "Crossover Operator")
-    plot_optimal_generations(results, "Crossover Operator")
+    plot_execution_times(results, label)
+    plot_optimal_generations(results, label)
+
+    return results
 
 
-def _measure_metrics(alg: GeneticAlgorithm, config: ExperimentConfig, iterations):
+def _measure_metrics(
+    alg: GeneticAlgorithm,
+    config: ExperimentConfig,
+    iterations: int,
+):
     results = {}
-    for operator in config.crossover_operators:
-        alg.crossover_operator = operator
+    for operator in config.mutation_operators:
+        alg.mutation_operator = operator
         key = operator.__class__.__name__
 
         for _ in range(iterations):

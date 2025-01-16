@@ -6,6 +6,9 @@ class Mutation:
 
     _probability: float  # Probability of mutation for each gene
 
+    def __init__(self, probability: float):
+        self.probability = probability
+
     def __str__(self):
         return f"Mutation: {self.__class__.__name__}"
 

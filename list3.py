@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-from knapsack.analyze.mutation_impact import mutation_impact
+from knapsack.analyze.mutation_impact import mutation_rate_impact
+from knapsack.analyze.selector_impact import selector_effectiveness
 from knapsack.analyze.utility import ExperimentConfig
 from knapsack.dataset import DataInterface
 from knapsack.evaluators.fitness import FitnessEvaluator, ScalingFitnessEvaluator
@@ -13,11 +14,8 @@ from knapsack.operators.fixed_point_crossover import FixedPointCrossover
 from knapsack.operators.multi_point_crossover import MultiPointCrossover
 from knapsack.operators.simulated_binary_crossover import SimulatedBinaryCrossover
 from knapsack.operators.uniform_crossover import UniformCrossover
-from knapsack.performance.selector_performance import selector_effectiveness
-from knapsack.selectors.adaptive_selector import AdaptiveRouletteSelector
 from knapsack.selectors.elitism_selector import ElitismSelector
 from knapsack.selectors.random_selector import RandomSelector
-from knapsack.selectors.ranking_selector import RankingSelector
 from knapsack.selectors.roulette_selector import RouletteSelector
 from knapsack.selectors.tournament_selector import TournamentSelector
 
@@ -38,8 +36,6 @@ evaluators = [
 ]
 eval = evaluators[0]
 selectors = [
-    AdaptiveRouletteSelector(eval),
-    RankingSelector(eval),
     RandomSelector(),
     RouletteSelector(eval),
     TournamentSelector(eval),
@@ -54,8 +50,8 @@ crossovers = [
     SimulatedBinaryCrossover(dev=dev),
 ]
 mutations = [
-    BitFlipMutation(),
-    GaussianMutation(),
+    BitFlipMutation(mutation_rates[0]),
+    GaussianMutation(mutation_rates[0]),
     DynamicMutation(mutation_rates[0], generations),
 ]
 
@@ -75,4 +71,4 @@ config.generations = [100]
 config.population_sizes = [25]
 
 selector_effectiveness(GeneticAlgorithm, config)
-mutation_impact(GeneticAlgorithm, config)
+mutation_rate_impact(GeneticAlgorithm, config)
