@@ -1,3 +1,4 @@
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -6,6 +7,7 @@ from knapsack.analyze.utility import (
     ExperimentResults,
     append_experiment_results,
     init_alg,
+    print_statistical_summary,
 )
 from knapsack.genetic_algorithm import GeneticAlgorithm
 
@@ -28,6 +30,7 @@ def selector_effectiveness(
     plot_selector_performance(results)
     plot_diversity(results)
     plot_execution_times(results)
+    plot_optimal_generations(results)
     print_statistical_summary(results)
 
     return results
@@ -39,12 +42,12 @@ def _selection_performance_analysis(
     results = {}
     for selector in config.selectors:
         alg.selector = selector
+        key = type(selector).__name__
 
         for _ in range(iterations):
+            alg.clear_metrics()
             alg.reinitialize_population()
             execution_time = alg.evolve()
-
-            key = type(selector).__name__
             append_experiment_results(results, key, alg, execution_time)
 
     return results
@@ -71,9 +74,9 @@ def plot_selector_performance(results: dict[str, ExperimentResults]):
         for j, operator in enumerate(selector_operators):
             # Get data
             generations = range(1, results[operator].metadata["generations"] + 1)
-            mean_data = np.array(getattr(results[operator], metric))
+            mean_data = np.array(getattr(results[operator], f"mean_{metric}"))
             std_data = np.std(
-                [getattr(results[operator], metric) for _ in range(5)], axis=0
+                [getattr(results[operator], f"mean_{metric}") for _ in range(5)], axis=0
             )
 
             # Plot mean line
@@ -125,8 +128,10 @@ def plot_diversity(results: dict[str, ExperimentResults]):
     for i, operator in enumerate(selector_operators):
         if results[operator].diversity:  # Check if diversity data exists
             generations = range(1, results[operator].metadata["generations"] + 1)
-            mean_data = np.array(results[operator].diversity)
-            std_data = np.std([results[operator].diversity for _ in range(5)], axis=0)
+            mean_data = np.array(results[operator].mean_diversity)
+            std_data = np.std(
+                [results[operator].mean_diversity for _ in range(5)], axis=0
+            )
 
             plt.plot(
                 generations,
@@ -157,6 +162,7 @@ def plot_diversity(results: dict[str, ExperimentResults]):
 def plot_execution_times(results: dict[str, ExperimentResults]):
     """
     Plot the execution times comparison for different selection methods.
+
     Args:
         results (dict): Dictionary of ExperimentResults objects containing execution times.
     """
@@ -164,7 +170,7 @@ def plot_execution_times(results: dict[str, ExperimentResults]):
     selector_operators = list(results.keys())
 
     execution_times = [
-        results[operator].execution_time for operator in selector_operators
+        results[operator].mean_execution_time for operator in selector_operators
     ]
 
     bars = plt.bar(selector_operators, execution_times)
@@ -189,19 +195,48 @@ def plot_execution_times(results: dict[str, ExperimentResults]):
     plt.show()
 
 
-# Print statistical summary
-def print_statistical_summary(results: dict[str, ExperimentResults]):
+def plot_optimal_generations(results: dict[str, ExperimentResults]):
     """
-    Print statistical summary of the results.
+    Plot a comparison of optimal generations (when best solution was found) for different selectors.
+
     Args:
-        results (dict): Dictionary of ExperimentResults objects.
+        results (dict): Dictionary of ExperimentResults objects containing optimal generation data.
     """
-    print("\nStatistical Summary:")
-    for operator, data in results.items():
-        print(f"\n{operator}:")
-        print(f"Execution Time: {data.execution_time:.2f} miliseconds")
-        print(f"Final Best Fitness: {data.best_fitness[-1]:.4f}")
-        print(f"Final Average Fitness: {data.average_fitness[-1]:.4f}")
-        print(f"Final Worst Fitness: {data.worst_fitness[-1]:.4f}")
-        if data.diversity:
-            print(f"Final Population Diversity: {data.diversity[-1]:.4f}")
+    plt.figure(figsize=(10, 6))
+    selector_operators = list(results.keys())
+
+    optimal_gens = [
+        results[operator].mean_optimal_generation for operator in selector_operators
+    ]
+
+    # Create bars with different colors
+    bars = plt.bar(selector_operators, optimal_gens)
+    colors = plt.cm.get_cmap("viridis")(np.linspace(0, 1, len(bars)))
+    for bar, color in zip(bars, colors):
+        bar.set_color(color)
+
+    # Add value labels on top of each bar
+    for bar in bars:
+        height = bar.get_height()
+        plt.text(
+            bar.get_x() + bar.get_width() / 2.0,
+            height,
+            f"Gen {int(height)}",
+            ha="center",
+            va="bottom",
+        )
+
+    plt.title("Optimal Solution Discovery Speed Comparison")
+    plt.xlabel("Selection Method")
+    plt.ylabel("Generation When Best Solution Found")
+    plt.xticks(rotation=45)
+    plt.grid(True, axis="y")
+
+    avg_gen = float(np.mean(optimal_gens))
+    plt.axhline(
+        y=avg_gen, color="r", linestyle="--", label=f"Average (Gen {avg_gen:.1f})"
+    )
+    plt.legend()
+
+    plt.tight_layout()
+    plt.show()

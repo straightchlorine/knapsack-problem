@@ -13,7 +13,6 @@ from knapsack.operators.fixed_point_crossover import FixedPointCrossover
 from knapsack.operators.multi_point_crossover import MultiPointCrossover
 from knapsack.operators.simulated_binary_crossover import SimulatedBinaryCrossover
 from knapsack.operators.uniform_crossover import UniformCrossover
-from knapsack.performance.selector_execution_time import selector_time_efficiency
 from knapsack.performance.selector_mutation_impact import selector_diversity_impact
 from knapsack.performance.selector_performance import selector_effectiveness
 from knapsack.selectors.adaptive_selector import AdaptiveRouletteSelector
@@ -38,12 +37,14 @@ evaluators = [
     FitnessEvaluator(problem),
     ScalingFitnessEvaluator(problem),
 ]
+eval = evaluators[0]
 selectors = [
-    AdaptiveRouletteSelector(evaluators[0]),
-    RankingSelector(evaluators[0]),
+    AdaptiveRouletteSelector(eval),
+    RankingSelector(eval),
     RandomSelector(),
-    # RouletteSelector(evaluators[0]),
-    TournamentSelector(evaluators[0]),
+    RouletteSelector(eval),
+    TournamentSelector(eval),
+    ElitismSelector(eval),
 ]
 crossovers = [
     MultiPointCrossover(points=[2, 3], dev=dev),
@@ -73,8 +74,6 @@ config = ExperimentConfig(
 
 config.generations = [100]
 config.population_sizes = [25]
-selector_effectiveness(GeneticAlgorithm, config)
 
-# selector_time_efficiency(alg, selectors, iterations=20)
-# mutation_impact(alg, mutation_rates, iterations=20)
-# selector_diversity_impact(alg, selectors, mutation_rates, iterations=20)
+selector_effectiveness(GeneticAlgorithm, config)
+mutation_impact(GeneticAlgorithm, config)

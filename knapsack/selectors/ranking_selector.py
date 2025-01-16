@@ -15,7 +15,7 @@ class RankingSelector(Selector):
         self.evaluator = evaluator
         self.scale_factor = scale_factor
 
-    def select(self, number_of_parents=2):
+    def select(self, number_of_parents: int = 2) -> list:
         """Select parents using ranking selection.
 
         Args:
@@ -24,6 +24,9 @@ class RankingSelector(Selector):
         Returns:
             list: List of selected chromosomes.
         """
+        if not hasattr(self, "population") or len(self.population) == 0:
+            raise ValueError("Population is not defined or empty.")
+
         # rank chromosomes based on fitness
         fitness_scores = np.array([self.evaluator.evaluate(c) for c in self.population])
         ranks = np.argsort(np.argsort(-fitness_scores))  # Higher fitness = lower rank

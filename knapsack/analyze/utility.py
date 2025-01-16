@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from statistics import fmean
 from typing import Any, Sequence
 
 from knapsack.dataset import Dataset
@@ -29,11 +30,40 @@ class ExperimentResults:
     """Results from a single genetic algorithm run."""
 
     metadata: dict[str, Any]
-    execution_time: float
-    diversity: list[float]
-    best_fitness: list[float]
-    average_fitness: list[float]
-    worst_fitness: list[float]
+    execution_time: list[float]
+    diversity: list[list[float]]
+    best_fitness: list[list[float]]
+    average_fitness: list[list[float]]
+    worst_fitness: list[list[float]]
+    optimal_generation: list[int]
+
+    @property
+    def mean_execution_time(self) -> float:
+        return fmean(self.execution_time) if self.execution_time else 0.0
+
+    @property
+    def mean_optimal_generation(self) -> float:
+        return fmean(self.optimal_generation) if self.optimal_generation else 0.0
+
+    @property
+    def mean_diversity(self) -> list[float]:
+        means = [fmean(values) for values in zip(*self.diversity)]
+        return means
+
+    @property
+    def mean_best_fitness(self) -> list[float]:
+        means = [fmean(values) for values in zip(*self.best_fitness)]
+        return means
+
+    @property
+    def mean_average_fitness(self) -> list[float]:
+        means = [fmean(values) for values in zip(*self.average_fitness)]
+        return means
+
+    @property
+    def mean_worst_fitness(self) -> list[float]:
+        means = [fmean(values) for values in zip(*self.worst_fitness)]
+        return means
 
 
 def init_alg(alg: type[GeneticAlgorithm], config: ExperimentConfig):
@@ -57,18 +87,52 @@ def is_class_equal(obj1, obj2):
 
 
 def append_experiment_results(results: dict, key, alg: GeneticAlgorithm, execution_time):
-    results[key] = ExperimentResults(
-        metadata={
-            "population_size": alg.population_size,
-            "mutation_rate": alg.mutation_rate,
-            "selector": type(alg.selector).__name__,
-            "operator": type(alg.crossover_operator).__name__,
-            "evaluator": type(alg.evaluator).__name__,
-            "generations": alg.generations,
-        },
-        execution_time=execution_time,
-        diversity=alg.diversity,
-        best_fitness=alg.best_fitness,
-        average_fitness=alg.average_fitness,
-        worst_fitness=alg.worst_fitness,
-    )
+    if key not in results:
+        results[key] = ExperimentResults(
+            metadata={
+                "population_size": alg.population_size,
+                "mutation_rate": alg.mutation_rate,
+                "selector": type(alg.selector).__name__,
+                "operator": type(alg.crossover_operator).__name__,
+                "evaluator": type(alg.evaluator).__name__,
+                "generations": alg.generations,
+            },
+            execution_time=[execution_time],
+            diversity=[],
+            best_fitness=[],
+            average_fitness=[],
+            worst_fitness=[],
+            optimal_generation=[],
+        )
+
+        results[key].diversity.append(alg.diversity)
+        results[key].best_fitness.append(alg.best_fitness)
+        results[key].average_fitness.append(alg.average_fitness)
+        results[key].worst_fitness.append(alg.worst_fitness)
+        results[key].optimal_generation.append(alg.optimal_generation)
+
+    else:
+        results[key].execution_time.append(execution_time)
+        results[key].diversity.append(alg.diversity)
+        results[key].best_fitness.append(alg.best_fitness)
+        results[key].average_fitness.append(alg.average_fitness)
+        results[key].worst_fitness.append(alg.worst_fitness)
+        results[key].optimal_generation.append(alg.optimal_generation)
+
+
+def print_statistical_summary(results: dict[str, ExperimentResults]):
+    """
+    Print statistical summary of the results.
+
+    Args:
+        results (dict): Dictionary of ExperimentResults objects.
+    """
+    print("\nStatistical Summary:")
+    for operator, data in results.items():
+        print(f"\n{operator}:")
+        print(f"Execution Time: {data.mean_execution_time:.2f} miliseconds")
+        print(f"Best Fitness: {fmean(data.mean_best_fitness):.4f}")
+        print(f"Average Fitness: {fmean(data.mean_average_fitness):.4f}")
+        print(f"Worst Fitness: {fmean(data.mean_worst_fitness):.4f}")
+        print(f"Population Diversity: {fmean(data.mean_diversity):.4f}")
+        print(f"Optimal Generation: {data.mean_optimal_generation}")

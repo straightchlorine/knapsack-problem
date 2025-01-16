@@ -111,6 +111,13 @@ class GeneticAlgorithm:
         if self._mutation_operator:
             self._mutation_operator.probability = value
 
+    def clear_metrics(self):
+        self.best_fitness = []
+        self.average_fitness = []
+        self.worst_fitness = []
+        self.diversity = []
+        self.optimal_generation = 0
+
     def reinitialize_population(self):
         """Reinitialize the population with the current strategy."""
         self.population = Population(
@@ -136,6 +143,9 @@ class GeneticAlgorithm:
                 avg_fitness = np.mean(fitness_scores)
                 worst_fitness = min(fitness_scores)
                 diversity = self.population.measure_diversity()
+
+                if not self.best_fitness or best_fitness > max(self.best_fitness):
+                    self.optimal_generation = generation
 
                 self.best_fitness.append(best_fitness)
                 self.average_fitness.append(avg_fitness)
