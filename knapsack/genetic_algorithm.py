@@ -33,6 +33,10 @@ class GeneticAlgorithm:
         mutation_rate=0.01,
         strategy="value_biased",
     ):
+        self._evaluator = evaluator
+        self._selector = selector
+        self._selector.evaluator = evaluator
+
         self.dev = False
         self.dataset = dataset
         self.gene_length = dataset.length
@@ -40,10 +44,6 @@ class GeneticAlgorithm:
         self._population_size = population_size
         self._max_generations = num_generations
         self._mutation_rate = mutation_rate
-
-        self._evaluator = evaluator
-        self._selector = selector
-        self._selector.evaluator = evaluator
 
         self._mutation_operator = mutation_operator
         self._mutation_operator.probability = mutation_rate
@@ -90,8 +90,17 @@ class GeneticAlgorithm:
 
     @evaluator.setter
     def evaluator(self, evaluator: Evaluator):
-        self.evaluator = evaluator
-        self.evaluator.dataset = self.dataset
+        self._evaluator = evaluator
+        self._evaluator.dataset = self._dataset
+
+    @property
+    def dataset(self):
+        return self._dataset
+
+    @dataset.setter
+    def dataset(self, dataset: Dataset):
+        self._dataset = dataset
+        self._evaluator.dataset = dataset
 
     @property
     def generations(self):
@@ -110,6 +119,24 @@ class GeneticAlgorithm:
         self._mutation_rate = value
         if self._mutation_operator:
             self._mutation_operator.probability = value
+
+    @property
+    def mutation_operator(self):
+        return self._mutation_operator
+
+    @mutation_operator.setter
+    def mutation_operator(self, operator: Mutation):
+        self._mutation_operator = operator
+        if not self._mutation_operator.probability:
+            self._mutation_operator.probability = self._mutation_rate
+
+    @property
+    def strategy(self):
+        return self._strategy
+
+    @strategy.setter
+    def strategy(self, strategy):
+        self._strategy = strategy
 
     def clear_metrics(self):
         self.best_fitness = []

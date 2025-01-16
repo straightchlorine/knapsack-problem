@@ -7,9 +7,7 @@ class Selector:
 
     _population: np.ndarray
     evaluator: Evaluator
-
-    def __init__(self):
-        self._population = None
+    tournament_size: int
 
     def __str__(self):
         return f"Selector: {self.__class__.__name__}"

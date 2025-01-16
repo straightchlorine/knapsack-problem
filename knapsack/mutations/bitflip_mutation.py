@@ -16,6 +16,7 @@ class BitFlipMutation(Mutation):
             np.ndarray: The mutated population.
         """
         mutated_population = population.copy()
+        mutated_population = np.array(mutated_population, dtype=int)
         mutation_mask = np.random.rand(*mutated_population.shape) < self.probability
         mutated_population[mutation_mask] ^= 1
         return mutated_population

@@ -13,7 +13,6 @@ from knapsack.operators.fixed_point_crossover import FixedPointCrossover
 from knapsack.operators.multi_point_crossover import MultiPointCrossover
 from knapsack.operators.simulated_binary_crossover import SimulatedBinaryCrossover
 from knapsack.operators.uniform_crossover import UniformCrossover
-from knapsack.performance.selector_mutation_impact import selector_diversity_impact
 from knapsack.performance.selector_performance import selector_effectiveness
 from knapsack.selectors.adaptive_selector import AdaptiveRouletteSelector
 from knapsack.selectors.elitism_selector import ElitismSelector

@@ -1,137 +1,41 @@
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import seaborn as sns
-
-from knapsack.analyze.utility import ExperimentConfig, init_alg
-from knapsack.dataset import Dataset
-from knapsack.evaluators.evaluator import Evaluator
+from knapsack.analyze.utility import (
+    ExperimentConfig,
+    append_experiment_results,
+    init_alg,
+    plot_diversity,
+    plot_execution_times,
+    plot_optimal_generations,
+    plot_performance,
+)
 from knapsack.genetic_algorithm import GeneticAlgorithm
-from knapsack.mutations.mutation import Mutation
-from knapsack.operators.crossover import Crossover
-from knapsack.selectors.selector import Selector
 
 
 def crossover_efectiveness(
     alg: type[GeneticAlgorithm],
     config: ExperimentConfig,
+    iterations=10,
 ):
     algorithm = init_alg(alg, config)
-    results = _measure_crossover_effectiveness(algorithm, config)
-    plot_crossover_effectiveness(results)
+    results = _measure_metrics(algorithm, config, iterations)
+
+    plot_performance(results)
+    plot_diversity(results)
+    plot_execution_times(results, "Crossover Operator")
+    plot_optimal_generations(results, "Crossover Operator")
 
 
-def _measure_crossover_effectiveness(
-    alg: GeneticAlgorithm,
-    config: ExperimentConfig,
-):
-    columns = [
-        "crossover_operator",
-        "problem_id",
-        "mean_best_fitness",
-        "mean_average_fitness",
-        "mean_worst_fitness",
-        "mean_diversity",
-        "execution_time",
-        "optimal_generation",
-    ]
-    df = pd.DataFrame(columns=pd.Index(columns))
-
-    # iterate through operators, set them
-    # iterate through problems, set them
+def _measure_metrics(alg: GeneticAlgorithm, config: ExperimentConfig, iterations):
+    results = {}
     for operator in config.crossover_operators:
         alg.crossover_operator = operator
+        key = operator.__class__.__name__
 
-        for pid, problem in enumerate(config.problems):
-            alg.clear_metrics()
-            if alg.dataset != problem:
+        for _ in range(iterations):
+            for _, problem in enumerate(config.problems):
+                alg.clear_metrics()
                 alg.dataset = problem
                 alg.reinitialize_population()
-            execution_time = alg.evolve()
+                execution_time = alg.evolve()
+                append_experiment_results(results, key, alg, execution_time)
 
-            # calculate metrics
-            mean_best_fitness = np.mean(alg.best_fitness)
-            mean_average_fitness = np.mean(alg.average_fitness)
-            mean_worst_fitness = np.mean(alg.worst_fitness)
-            mean_diversity = np.mean(alg.diversity)
-            optimal_generation = alg.optimal_generation
-
-            new_data = pd.DataFrame(
-                [
-                    {
-                        "crossover_operator": operator.__class__.__name__,
-                        "problem_id": pid,
-                        "mean_best_fitness": mean_best_fitness,
-                        "mean_average_fitness": mean_average_fitness,
-                        "mean_worst_fitness": mean_worst_fitness,
-                        "mean_diversity": mean_diversity,
-                        "execution_time": execution_time,
-                        "optimal_generation": optimal_generation,
-                    }
-                ]
-            )
-            new_data = new_data.dropna(axis=1, how="all")
-            df = pd.concat([df, new_data], ignore_index=True, sort=False)
-
-    return df
-
-
-def plot_crossover_effectiveness(df: pd.DataFrame):
-    grouped_df = (
-        df.groupby("crossover_operator")
-        .agg(
-            {
-                "mean_best_fitness": "mean",
-                "mean_average_fitness": "mean",
-                "mean_worst_fitness": "mean",
-                "mean_diversity": "mean",
-                "execution_time": "mean",
-                "optimal_generation": "mean",
-            }
-        )
-        .reset_index()
-    )
-
-    # -------------------------------------------
-    plt.figure(figsize=(8, 6))
-    sns.barplot(x="crossover_operator", y="mean_best_fitness", data=grouped_df)
-    plt.title("Mean Best Fitness by Crossover Operator")
-    plt.ylabel("Mean Best Fitness")
-    plt.xlabel("Crossover Operator")
-    plt.show()
-    # -------------------------------------------
-    plt.figure(figsize=(8, 6))
-    sns.barplot(x="crossover_operator", y="mean_average_fitness", data=grouped_df)
-    plt.title("Mean Average Fitness by Crossover Operator")
-    plt.ylabel("Mean Average Fitness")
-    plt.xlabel("Crossover Operator")
-    plt.show()
-    # -------------------------------------------
-    plt.figure(figsize=(8, 6))
-    sns.barplot(x="crossover_operator", y="mean_worst_fitness", data=grouped_df)
-    plt.title("Mean Worst Fitness by Crossover Operator")
-    plt.ylabel("Mean Worst Fitness")
-    plt.xlabel("Crossover Operator")
-    plt.show()
-    # -------------------------------------------
-    plt.figure(figsize=(8, 6))
-    sns.barplot(x="crossover_operator", y="mean_diversity", data=grouped_df)
-    plt.title("Mean Diversity by Crossover Operator")
-    plt.ylabel("Mean Diversity")
-    plt.xlabel("Crossover Operator")
-    plt.show()
-    # -------------------------------------------
-    plt.figure(figsize=(8, 6))
-    sns.barplot(x="crossover_operator", y="execution_time", data=grouped_df)
-    plt.title("Execution Time by Crossover Operator")
-    plt.ylabel("Execution Time (s)")
-    plt.xlabel("Crossover Operator")
-    plt.show()
-    # -------------------------------------------
-    plt.figure(figsize=(8, 6))
-    sns.barplot(x="crossover_operator", y="optimal_generation", data=grouped_df)
-    plt.title("Optimal Generation by Crossover Operator")
-    plt.ylabel("Optimal Generation")
-    plt.xlabel("Crossover Operator")
-    plt.show()
-    # -------------------------------------------
+    return results

@@ -1,21 +1,35 @@
 import matplotlib.pyplot as plt
 
-from knapsack.analyze.utility import ExperimentConfig, ExperimentResults, init_alg
+from knapsack.analyze.utility import (
+    ExperimentConfig,
+    append_experiment_results,
+    init_alg,
+    plot_diversity,
+    plot_execution_times,
+    plot_optimal_generations,
+    plot_performance,
+)
 from knapsack.genetic_algorithm import GeneticAlgorithm
 from knapsack.selectors.tournament_selector import TournamentSelector
 
 
-def tournament_selector_params_impact_analysis(
+def tournament_selector_analysis(
     alg: type[GeneticAlgorithm],
     config: ExperimentConfig,
     tournament_selector: TournamentSelector,
     tournament_sizes: list[int],
+    iterations=10,
 ):
-    # create basic instance
     config.selectors = [tournament_selector]
     algorithm = init_alg(alg, config)
-    results = _measure_metrics(algorithm, config, tournament_sizes)
-    plot_tournament_selector_impact(results)
+
+    results = _measure_metrics(algorithm, config, tournament_sizes, iterations)
+
+    plot_performance(results)
+    plot_diversity(results)
+    plot_execution_times(results, "Generation and TournamentSelector configuration")
+    plot_optimal_generations(results, "Generation and TournamentSelector configuration")
+
     return results
 
 
@@ -23,34 +37,27 @@ def _measure_metrics(
     alg: GeneticAlgorithm,
     config: ExperimentConfig,
     tournament_sizes: list[int],
+    iterations,
 ):
     results = {}
     for gen in config.generations:
         for t_size in tournament_sizes:
-            # clear the algorithm and set parameters
-            alg.clear_metrics()
-            alg.generations = gen
-            alg.selector.tournament_size = t_size
+            key = f"Gen: {gen} | Tournament size: {t_size}"
+            for _ in range(iterations):
+                # clear the algorithm and set parameters
+                alg.clear_metrics()
+                alg.generations = gen
 
-            execution_time = alg.evolve()
-            alg.reinitialize_population()
+                if hasattr(alg.selector, "tournament_size"):
+                    alg.selector.tournament_size = t_size
+                else:
+                    raise AttributeError(
+                        "Tournament selector wasn't passed or is invalid."
+                    )
 
-            key = f"gens_{gen}_tsize_{t_size}"
-            results[key] = ExperimentResults(
-                metadata={
-                    "population_size": alg.population_size,
-                    "mutation_rate": alg.mutation_rate,
-                    "selector": type(alg.selector).__name__,
-                    "operator": type(alg.crossover_operator).__name__,
-                    "evaluator": type(alg.evaluator).__name__,
-                    "generations": alg.generations,
-                },
-                execution_time=execution_time,
-                diversity=alg.diversity,
-                best_fitness=alg.best_fitness,
-                average_fitness=alg.average_fitness,
-                worst_fitness=alg.worst_fitness,
-            )
+                alg.reinitialize_population()
+                execution_time = alg.evolve()
+                append_experiment_results(results, key, alg, execution_time)
 
     return results
 
